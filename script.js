@@ -4,46 +4,60 @@ document.addEventListener('DOMContentLoaded', () => {
   const resultContainer = document.getElementById('resultContainer');
   const statusDisplay = document.getElementById('status-message');
 
+  // --- NEW: URL Parameter Check for QR Codes ---
+  const urlParams = new URLSearchParams(window.location.search);
+  const scannedId = urlParams.get('id');
+
+  if (scannedId) {
+    // If a QR code was scanned, fill the input and run the check automatically
+    const inputField = document.getElementById('cert-id-input');
+    if(inputField) inputField.value = scannedId;
+    runVerification(scannedId);
+  }
+
+  // --- Existing Manual Form Submission ---
   if (verifyForm) {
-    verifyForm.addEventListener('submit', async (event) => {
-      // THIS stops the form from refreshing the page and adding the '?'
+    verifyForm.addEventListener('submit', (event) => {
       event.preventDefault(); 
-      
       const inputField = document.getElementById('cert-id-input');
       const candidateId = inputField.value.trim();
-
       if (!candidateId) return;
-
-      statusDisplay.style.color = '#111827';
-      statusDisplay.innerText = 'Querying University Secure Records...';
-
-      try {
-        const response = await fetch('/api/verify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ certificateId: candidateId })
-        });
-
-        if (!response.ok && response.status !== 400 && response.status !== 404 && response.status !== 429) {
-          throw new Error(`Server returned HTTP ${response.status}`);
-        }
-
-        const result = await response.json();
-
-        searchSection.style.display = 'none';
-        resultContainer.style.display = 'block';
-
-        if (result.success && result.data) {
-          renderVerificationSuccess(result.data);
-        } else {
-          renderRecordNotFound(candidateId, result.message);
-        }
-      } catch (err) {
-        console.error("Verification Request Failed:", err);
-        statusDisplay.style.color = '#990000';
-        statusDisplay.innerText = 'Unable to connect to verification server. Please try again.';
-      }
+      
+      runVerification(candidateId);
     });
+  }
+
+  // --- Reusable Verification Logic ---
+  async function runVerification(candidateId) {
+    statusDisplay.style.color = '#111827';
+    statusDisplay.innerText = 'Querying University Secure Records...';
+
+    try {
+      const response = await fetch('/api/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ certificateId: candidateId })
+      });
+
+      if (!response.ok && response.status !== 400 && response.status !== 404 && response.status !== 429) {
+        throw new Error(`Server returned HTTP ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      searchSection.style.display = 'none';
+      resultContainer.style.display = 'block';
+
+      if (result.success && result.data) {
+        renderVerificationSuccess(result.data);
+      } else {
+        renderRecordNotFound(candidateId, result.message);
+      }
+    } catch (err) {
+      console.error("Verification Request Failed:", err);
+      statusDisplay.style.color = '#990000';
+      statusDisplay.innerText = 'Unable to connect to verification server. Please try again.';
+    }
   }
 });
 
