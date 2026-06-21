@@ -1,7 +1,8 @@
-import { readFile } from 'fs/promises';
+// api/verify.js
+// Written in strict CommonJS to run natively on Vercel without a package.json
 
-export default async function handler(req, res) {
-  // 1. Catch wrong request types immediately
+module.exports = function handler(req, res) {
+  // 1. Only allow POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, message: 'Method Not Allowed' });
   }
@@ -13,11 +14,9 @@ export default async function handler(req, res) {
   }
 
   try {
-    // CRITICAL FIX: This exact syntax tells Vercel's cloud bundler: 
-    // "You are strictly required to bundle database.json into the serverless container."
-    const fileUrl = new URL('./database.json', import.meta.url);
-    const rawData = await readFile(fileUrl, 'utf8');
-    const db = JSON.parse(rawData);
+    // NATIVE COMMONJS IMPORT:
+    // This automatically tells Vercel to bundle database.json AND instantly parses it into a JS object.
+    const db = require('./database.json');
 
     const cleanId = certificateId.trim().toUpperCase();
     const studentRecord = db[cleanId];
@@ -35,11 +34,10 @@ export default async function handler(req, res) {
     }
 
   } catch (error) {
-    // If it ever fails again, this forces Vercel's runtime Logs dashboard to show the exact line number
-    console.error("Vercel Cloud Execution Error:", error);
+    console.error("Vercel Execution Error:", error);
     return res.status(500).json({ 
       success: false, 
-      message: 'Server configuration error: Unable to load secure records.' 
+      message: 'Internal Server Error: Unable to read database.' 
     });
   }
-}
+};
