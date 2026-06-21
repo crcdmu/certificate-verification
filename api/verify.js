@@ -2,7 +2,7 @@ const crypto = require('crypto');
 const db = require('./database.json');
 
 // Must match the migrator's salt exactly
-const SECRET_SALT = "DMU_CRPC_SECURE_ARCHIVE_SALT_2026_#k9X!p";
+const SECRET_SALT = process.env.SECRET_SALT;
 
 module.exports = function handler(req, res) {
   if (req.method !== 'POST') {
