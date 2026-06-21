@@ -72,9 +72,11 @@ async function renderVerification() {
   }
 
   if (studentData) {
-    // =========================================================
-    // NEW DETAILS GRID WITH SHA-256 CRYPTOGRAPHIC CHECKSUM
-    // =========================================================
+    // Stamp the metadata into the invisible DOM wrapper for IT auditors
+    resultContainer.setAttribute('data-cryptographic-checksum', studentData.checksum);
+    resultContainer.setAttribute('data-verification-timestamp', new Date().toISOString());
+
+    // Render the clean, human-friendly UI
     resultContainer.innerHTML = `
       <div class="verified-badge">✓ OFFICIAL RECORD VERIFIED</div>
       <div class="details-grid">
@@ -94,16 +96,11 @@ async function renderVerification() {
           <span>Archive Status</span>
           <strong class="status-valid">${studentData.status}</strong>
         </div>
-        <div class="detail-item">
-          <span>Cryptographic SHA-256 Checksum</span>
-          <strong style="font-family: monospace; font-size: 0.75rem; word-break: break-all; color: #6b7280;">
-             ${studentData.checksum}
-          </strong>
-        </div>
       </div>
       <p class="footer-note" style="margin-top:15px;">Dhanamanjuri University • CR&PC Archives</p>
       <a href="/" class="btn-secondary" style="display:inline-block; margin-top:10px;">Verify Another ID</a>
     `;
+  
   } else {
     resultContainer.innerHTML = `
       <div class="invalid-badge">✕ RECORD NOT FOUND</div>
