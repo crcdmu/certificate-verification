@@ -78,7 +78,10 @@ async function renderVerification() {
 
     // Render the clean, human-friendly UI
     resultContainer.innerHTML = `
-      <div class="verified-badge">✓ OFFICIAL RECORD VERIFIED</div>
+    <div class="verified-badge">
+   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+   Official Record Verified
+</div>
       <div class="details-grid">
         <div class="detail-item">
           <span>Candidate Name</span>
