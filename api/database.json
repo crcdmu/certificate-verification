@@ -1,38 +1,43 @@
 {
-  "466eff8e50186184591f06e9dcd1dadab44cbcfb26ed21497ff208187978fb7c": {
+  "0d328cc95321505a39f11e15b41822b669a99afd1305e130c11111dbd2154b83": {
     "name": "Soibam Bikash",
     "programme": "Six-Month Internship Programme",
+    "batch": "aug 2025",
     "issuedOn": "June 2026",
-    "status": "VALID"
+    "status": "Valid"
   },
-  "cb2d9eddf953d6effe40d70baeb15013466776fa18194be35bee76b288792297": {
-    "name": "Seram Albino",
+  "1c50c6f7fa6bf7326fdec9afe833b0611d81cc97e38a7c0c8aaef7582a230f82": {
+    "name": "Albino Seram",
     "programme": "Six-Month Internship Programme",
+    "batch": "aug 2025",
     "issuedOn": "June 2026",
-    "status": "VALID"
+    "status": "Valid"
   },
-  "694f52e6ede8823ca6899792a002113470d8aa08ef3b5150a46b6653b10eafd8": {
+  "f9cbe1c36e48de1babcb1bbb7ccf7a1c3b3694f4a89f5b286a06511598371d72": {
     "name": "Languigangpu Kamei",
     "programme": "Six-Month Internship Programme",
+    "batch": "aug 2025",
     "issuedOn": "June 2026",
-    "status": "VALID"
+    "status": "Valid"
   },
-  "a5b86756842a0fbf7a0fd2b777ac0175627d7901be2a4993f4c83cf8fe629b1e": {
+  "0d55d9f8e607e04e9e0da5ee704a770c0d70c968fc6698eab915123462de7b07": {
     "name": "Lanjailiu Kamei",
     "programme": "Six-Month Internship Programme",
+    "batch": "aug 2025",
     "issuedOn": "June 2026",
-    "status": "VALID"
+    "status": "Valid"
   },
-  "d5f24fdfc0457ea351abfd43147fa1a4fa34052d8bc47087e6ed7f93a099e2cd": {
+  "d84d83ed100bd66c945807dd8f3a87ff52298acc913ced1a27a558925c7768c2": {
     "name": "Gainiamngam Dangmei",
     "programme": "Six-Month Internship Programme",
+    "batch": "aug 2025",
     "issuedOn": "June 2026",
-    "status": "VALID"
+    "status": "Valid"
   },
-  "49c0330a65d6dfcc1fb61abc4b4bd0e66fb7f423d840d6ff2e36f5e1f9a1aa1b": {
+  "bbf840e6c7f7cff1bfa8d17bfdcae8a7b70e7812de3266cac628dfefc17600aa": {
     "name": "Ningtingthuiliu Malangmei",
-    "programme": "Six-Month Internship Programme",
-    "issuedOn": "June 2026",
-    "status": "VALID"
+    "programme": "6months Internship",
+    "batch": "aug 2025",
+    "status": "Valid"
   }
 }
