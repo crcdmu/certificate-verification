@@ -16,9 +16,7 @@ if (!SECRET_KEY || SECRET_KEY.length < 32) {
   process.exit(1);
 }
 
-/**
- * Clean up stale rate limit entries
- */
+
 function cleanupRateLimitMap() {
   const now = Date.now();
   let cleaned = 0;
