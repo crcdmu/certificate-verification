@@ -4,15 +4,6 @@ const db = require('./database.json');
 const SECRET_KEY = process.env.SECRET_SALT || process.env.SECRET_KEY;
 const CERT_ID_REGEX = /^CRC-\d{8}-[A-Z0-9]{3,5}$/;
 
-// Validate SECRET_KEY on startup
-if (!SECRET_KEY || SECRET_KEY.length < 32) {
-  console.error("CRITICAL SECURITY ERROR: SECRET_KEY is missing or insecure (under 32 chars)!");
-  process.exit(1);
-}
-
-// FIX 1: Removed stateful in-memory rate limiting.
-// Rely on Vercel KV or Edge Middleware for serverless rate limiting.
-
 /**
  * Set security headers on response
  */
@@ -37,9 +28,7 @@ function validateCORS(req, res) {
   ];
   let origin = req.headers.origin;
 
-  if (!origin) {
-    return true; 
-  }
+  if (!origin) return true; 
 
   const normalizedOrigin = origin.replace(/\/$/, '').toLowerCase();
   const normalizedAllowedOrigins = allowedOrigins.map(o => o.replace(/\/$/, '').toLowerCase());
@@ -88,6 +77,12 @@ function generateHash(certificateId) {
  */
 module.exports = function handler(req, res) {
   setSecurityHeaders(res);
+
+  // RUNTIME SECURITY CHECK: Prevents build crashes while maintaining strict security
+  if (!SECRET_KEY || SECRET_KEY.length < 32) {
+    console.error("CRITICAL SECURITY ERROR: SECRET_KEY is missing or insecure (under 32 chars)!");
+    return res.status(500).json({ success: false, message: 'Internal Server Configuration Error.' });
+  }
 
   if (!validateCORS(req, res)) return;
   if (req.method === 'OPTIONS') return res.status(204).end();
