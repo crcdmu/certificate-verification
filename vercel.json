@@ -1,9 +1,0 @@
-{
-  "routes": [
-    {
-      "src": "/api/(?i).*database.*",
-      "status": 403,
-      "dest": "/403.html"
-    }
-  ]
-}
