@@ -9,15 +9,19 @@
 <body>
 
     <div class="card">
-        <h2>Certificate Verification</h2>
-        <p class="subtitle">Enter a Certificate ID to verify its authenticity.</p>
-        
-        <form id="verify-form">
-            <input type="text" id="cert-id-input" placeholder="e.g., CRC-20220709-B9M" required>
-            <button type="submit" class="btn">Verify</button>
-        </form>
+        <div id="search-section">
+            <h2>Certificate Verification</h2>
+            <p class="subtitle">Enter a Certificate ID to verify its authenticity.</p>
+            
+            <form id="verify-form">
+                <input type="text" id="cert-id-input" placeholder="e.g., CRC-20220709-B9M" required>
+                <button type="submit" class="btn">Verify</button>
+            </form>
 
-        <div id="status-message" style="margin-top: 15px; font-size: 0.9rem; font-weight: 500;"></div>
+            <div id="status-message" style="margin-top: 15px; font-size: 0.9rem; font-weight: 500;"></div>
+        </div>
+
+        <div id="resultContainer" style="display: none;"></div>
     </div>
 
     <script src="script.js"></script>
