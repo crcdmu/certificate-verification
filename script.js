@@ -90,20 +90,34 @@ function renderVerificationSuccess(studentData) {
   document.getElementById('safe-status').textContent = studentData.status;
 }
 
-// FIX 4: Handle "Blank" or gracefully render Not Found screen
+// FIX: Handle "Blank" or gracefully render Not Found screen SECURELY
 function renderRecordNotFound(displayId, customMessage) {
   const resultContainer = document.getElementById('resultContainer');
   const isBlank = !displayId || displayId === 'Blank';
-  
-  // Condition checks if it's blank so we don't awkwardly render "matching ID Blank"
-  const idText = isBlank ? 'provided' : `matching ID <strong id="safe-id-display"></strong>`;
-  const errorMsg = customMessage || `No authentic certificate ${idText} exists in the repository.`;
 
+  // Render the static HTML skeleton safely
   resultContainer.innerHTML = `
     <div style="color: #990000; font-weight: 800; font-size: 1.1rem; margin-bottom: 12px;" class="invalid-badge">✕ RECORD NOT FOUND</div>
-    <p style="color: #64748b; margin-bottom: 20px;">${errorMsg}</p>
+    <p id="error-msg-container" style="color: #64748b; margin-bottom: 20px;"></p>
     <button onclick="resetSearch()" class="btn" style="width: auto; padding: 10px 25px;">Back to Search</button>
   `;
+  
+  const msgContainer = document.getElementById('error-msg-container');
+
+  // Safely inject text content (prevents XSS)
+  if (customMessage) {
+    msgContainer.textContent = customMessage;
+  } else if (isBlank) {
+    msgContainer.textContent = "No authentic certificate provided exists in the repository.";
+  } else {
+    // Build the "matching ID <id>" string safely
+    msgContainer.textContent = "No authentic certificate matching ID ";
+    const strongTag = document.createElement('strong');
+    strongTag.textContent = displayId; // Automatically escapes HTML characters
+    msgContainer.appendChild(strongTag);
+    msgContainer.appendChild(document.createTextNode(" exists in the repository."));
+  }
+}
   
   if (!isBlank && !customMessage) {
     document.getElementById('safe-id-display').textContent = displayId;
