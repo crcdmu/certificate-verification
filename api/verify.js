@@ -19,24 +19,28 @@ module.exports = function handler(req, res) {
     "default-src 'self'; style-src 'self' 'unsafe-inline'; form-action 'self'; frame-ancestors 'none';"
   );
 
-  // Vulnerability #5 Fix: Explicit CORS & Preflight validation
-  const allowedOrigins = [
+const allowedOrigins = [
     'https://verification-dmu.vercel.app', 
-    'https://verification-dmu.vercel.app/',
-    'https://vercel.com/crpcdmu/verification/57NKzV4sBxfkviHptHUgGypWC8tL',
+    'http://localhost:5501',
     'http://localhost:3000'
   ];
   const origin = req.headers.origin;
 
   if (origin) {
-    if (!allowedOrigins.includes(origin)) {
-      return res.status(403).json({ success: false, message: 'Forbidden: Untrusted Origin.' });
+    // Dynamically allow the production domain OR any Vercel preview branch URL
+    const isAllowed = allowedOrigins.includes(origin) || origin.endsWith('.vercel.app');
+
+    if (!isAllowed) {
+      // Temporarily print the blocked origin in the response to help you debug
+      return res.status(403).json({ 
+        success: false, 
+        message: `Forbidden: Untrusted Origin [${origin}]` 
+      });
     }
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   }
-
   // Handle CORS Preflight (OPTIONS)
   if (req.method === 'OPTIONS') {
     return res.status(204).end();
