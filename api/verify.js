@@ -1,8 +1,7 @@
-import { readFileSync } from 'fs';
-import { join } from 'path';
+import { readFile } from 'fs/promises';
 
-export default function handler(req, res) {
-
+export default async function handler(req, res) {
+  // 1. Catch wrong request types immediately
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, message: 'Method Not Allowed' });
   }
@@ -14,8 +13,10 @@ export default function handler(req, res) {
   }
 
   try {
-    const filePath = join(process.cwd(), 'api', 'database.json');
-    const rawData = readFileSync(filePath, 'utf8');
+    // CRITICAL FIX: This exact syntax tells Vercel's cloud bundler: 
+    // "You are strictly required to bundle database.json into the serverless container."
+    const fileUrl = new URL('./database.json', import.meta.url);
+    const rawData = await readFile(fileUrl, 'utf8');
     const db = JSON.parse(rawData);
 
     const cleanId = certificateId.trim().toUpperCase();
@@ -34,9 +35,11 @@ export default function handler(req, res) {
     }
 
   } catch (error) {
-    console.error("Database read error:", error);
+    // If it ever fails again, this forces Vercel's runtime Logs dashboard to show the exact line number
+    console.error("Vercel Cloud Execution Error:", error);
     return res.status(500).json({ 
       success: false, 
-      message: 'Internal Server Error: ' + error.message 
+      message: 'Server configuration error: Unable to load secure records.' 
     });
   }
+}
