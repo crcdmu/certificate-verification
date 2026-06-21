@@ -4,35 +4,14 @@ const db = require('./database.json');
 const SECRET_KEY = process.env.SECRET_SALT || process.env.SECRET_KEY;
 const CERT_ID_REGEX = /^CRC-\d{8}-[A-Z0-9]{3,5}$/;
 
-// Rate limiting configuration
-const rateLimitMap = new Map();
-const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute window
-const RATE_LIMIT_MAX_REQUESTS = 10;     // Max 10 requests per IP per minute
-const RATE_LIMIT_CLEANUP_INTERVAL = 5 * 60 * 1000; // Cleanup every 5 minutes
-
 // Validate SECRET_KEY on startup
 if (!SECRET_KEY || SECRET_KEY.length < 32) {
   console.error("CRITICAL SECURITY ERROR: SECRET_KEY is missing or insecure (under 32 chars)!");
   process.exit(1);
 }
 
-
-function cleanupRateLimitMap() {
-  const now = Date.now();
-  let cleaned = 0;
-  for (const [ip, record] of rateLimitMap.entries()) {
-    if (now - record.startTime > RATE_LIMIT_WINDOW_MS * 2) {
-      rateLimitMap.delete(ip);
-      cleaned++;
-    }
-  }
-  if (cleaned > 0) {
-    console.log(`Rate limit cleanup: removed ${cleaned} stale entries`);
-  }
-}
-
-// Schedule periodic cleanup
-setInterval(cleanupRateLimitMap, RATE_LIMIT_CLEANUP_INTERVAL);
+// FIX 1: Removed stateful in-memory rate limiting.
+// Rely on Vercel KV or Edge Middleware for serverless rate limiting.
 
 /**
  * Set security headers on response
@@ -59,15 +38,14 @@ function validateCORS(req, res) {
   let origin = req.headers.origin;
 
   if (!origin) {
-    return true; // Allow if no origin header (server-to-server requests)
+    return true; 
   }
 
-  // Normalize origin: remove trailing slash and convert to lowercase for comparison
   const normalizedOrigin = origin.replace(/\/$/, '').toLowerCase();
   const normalizedAllowedOrigins = allowedOrigins.map(o => o.replace(/\/$/, '').toLowerCase());
 
   if (!normalizedAllowedOrigins.includes(normalizedOrigin)) {
-    console.error(`CORS Rejection - Origin: "${origin}" (normalized: "${normalizedOrigin}"), Allowed: ${JSON.stringify(normalizedAllowedOrigins)}`);
+    console.error(`CORS Rejection - Origin: "${origin}"`);
     res.status(403).json({ success: false, message: 'Forbidden: Untrusted Origin.' });
     return false;
   }
@@ -76,27 +54,6 @@ function validateCORS(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   return true;
-}
-
-/**
- * Check rate limit for client IP
- */
-function checkRateLimit(clientIp) {
-  const now = Date.now();
-  const record = rateLimitMap.get(clientIp) || { count: 0, startTime: now };
-
-  if (now - record.startTime > RATE_LIMIT_WINDOW_MS) {
-    record.count = 1;
-    record.startTime = now;
-  } else {
-    record.count += 1;
-    if (record.count > RATE_LIMIT_MAX_REQUESTS) {
-      return { allowed: false };
-    }
-  }
-
-  rateLimitMap.set(clientIp, record);
-  return { allowed: true, remaining: RATE_LIMIT_MAX_REQUESTS - record.count };
 }
 
 /**
@@ -130,44 +87,20 @@ function generateHash(certificateId) {
  * Main handler
  */
 module.exports = function handler(req, res) {
-  // Set security headers
   setSecurityHeaders(res);
 
-  // Validate CORS
-  if (!validateCORS(req, res)) {
-    return;
-  }
-
-  // Handle CORS Preflight
-  if (req.method === 'OPTIONS') {
-    return res.status(204).end();
-  }
-
-  // Only allow POST
+  if (!validateCORS(req, res)) return;
+  if (req.method === 'OPTIONS') return res.status(204).end();
+  
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, message: 'Method Not Allowed. Use POST.' });
   }
 
-  // Get client IP for rate limiting
-  const clientIp = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown-ip').split(',')[0].trim();
-
-  // Check rate limit
-  const rateLimitCheck = checkRateLimit(clientIp);
-  if (!rateLimitCheck.allowed) {
-    return res.status(429).json({
-      success: false,
-      message: 'Too many verification attempts. Please wait 60 seconds and try again.',
-      retryAfter: 60
-    });
-  }
-
-  // Validate Content-Type
   const contentType = req.headers['content-type'] || '';
   if (!contentType.includes('application/json')) {
     return res.status(415).json({ success: false, message: 'Unsupported Media Type. Use application/json.' });
   }
 
-  // Extract and validate certificate ID
   const { certificateId } = req.body || {};
   const validation = validateCertificateId(certificateId);
 
@@ -176,7 +109,6 @@ module.exports = function handler(req, res) {
   }
 
   try {
-    // Generate hash and lookup record
     const candidateHash = generateHash(validation.cleanId);
     const studentRecord = db[candidateHash];
 
