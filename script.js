@@ -25,7 +25,7 @@ async function handleVerification(event) {
       sessionStorage.setItem('verifiedCandidate', JSON.stringify(result.data));
       window.location.href = '/verify.html';
     } else {
-      statusDisplay.style.color = '#990000'; // DMU Red
+      statusDisplay.style.color = '#af0808'; // DMU Red
       statusDisplay.innerText = result.message;
     }
   } catch (err) {

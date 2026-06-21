@@ -2,7 +2,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 
 export default function handler(req, res) {
-  // 1. Only accept secure POST requests
+
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, message: 'Method Not Allowed' });
   }
@@ -14,12 +14,10 @@ export default function handler(req, res) {
   }
 
   try {
-    // 2. Safely locate and parse the hidden database.json inside the Vercel lambda
     const filePath = join(process.cwd(), 'api', 'database.json');
     const rawData = readFileSync(filePath, 'utf8');
     const db = JSON.parse(rawData);
 
-    // 3. Standardize the input (strips accidental spaces, ignores Upper/Lower case typing)
     const cleanId = certificateId.trim().toUpperCase();
     const studentRecord = db[cleanId];
 
