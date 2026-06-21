@@ -12,18 +12,14 @@
         <h2>Certificate Verification</h2>
         <p class="subtitle">Enter a Certificate ID to verify its authenticity.</p>
         
-        <form id="verifyForm">
-            <input type="text" id="certId" placeholder="e.g., CRC-20220809-H9D" required>
+        <form id="verify-form">
+            <input type="text" id="cert-id-input" placeholder="e.g., CRC-20250801-K9X" required>
             <button type="submit" class="btn">Verify</button>
         </form>
+
+        <div id="status-message" style="margin-top: 15px; font-size: 0.9rem; font-weight: 500;"></div>
     </div>
 
-    <script>
-        document.getElementById('verifyForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const id = document.getElementById('certId').value.trim();
-            window.location.href = `verify.html?id=${encodeURIComponent(id)}`;
-        });
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
