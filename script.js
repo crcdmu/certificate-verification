@@ -27,10 +27,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const result = await response.json();
 
-        if (result.success) {
-          sessionStorage.setItem('verifiedCandidate', JSON.stringify(result.data));
-          window.location.href = `/verify.html?id=${encodeURIComponent(candidateId)}`;
-        } else {
+        // NEW PATCHED
+if (result.success) {
+  const stampedData = { ...result.data, queriedId: candidateId.trim().toUpperCase() };
+  sessionStorage.setItem('verifiedCandidate', JSON.stringify(stampedData));
+  window.location.href = `/verify.html?id=${encodeURIComponent(candidateId)}`;
+} else {
           statusDisplay.style.color = '#990000'; // DMU Red
           statusDisplay.innerText = result.message;
         }
