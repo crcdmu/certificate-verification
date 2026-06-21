@@ -29,7 +29,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (result.success) {
           sessionStorage.setItem('verifiedCandidate', JSON.stringify(result.data));
-          // Pass the ID in the URL so copy-pasted links work for 3rd parties
           window.location.href = `/verify.html?id=${encodeURIComponent(candidateId)}`;
         } else {
           statusDisplay.style.color = '#990000'; // DMU Red
@@ -73,6 +72,9 @@ async function renderVerification() {
   }
 
   if (studentData) {
+    // =========================================================
+    // NEW DETAILS GRID WITH SHA-256 CRYPTOGRAPHIC CHECKSUM
+    // =========================================================
     resultContainer.innerHTML = `
       <div class="verified-badge">✓ OFFICIAL RECORD VERIFIED</div>
       <div class="details-grid">
@@ -91,6 +93,12 @@ async function renderVerification() {
         <div class="detail-item">
           <span>Archive Status</span>
           <strong class="status-valid">${studentData.status}</strong>
+        </div>
+        <div class="detail-item">
+          <span>Cryptographic SHA-256 Checksum</span>
+          <strong style="font-family: monospace; font-size: 0.75rem; word-break: break-all; color: #6b7280;">
+             ${studentData.checksum}
+          </strong>
         </div>
       </div>
       <p class="footer-note" style="margin-top:15px;">Dhanamanjuri University • CR&PC Archives</p>
