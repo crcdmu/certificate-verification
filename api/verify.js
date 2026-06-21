@@ -58,13 +58,18 @@ function validateCORS(req, res) {
     'http://localhost:5501',
     'http://localhost:3000'
   ];
-  const origin = req.headers.origin;
+  let origin = req.headers.origin;
 
   if (!origin) {
     return true; // Allow if no origin header (server-to-server requests)
   }
 
-  if (!allowedOrigins.includes(origin)) {
+  // Normalize origin: remove trailing slash and convert to lowercase for comparison
+  const normalizedOrigin = origin.replace(/\/$/, '').toLowerCase();
+  const normalizedAllowedOrigins = allowedOrigins.map(o => o.replace(/\/$/, '').toLowerCase());
+
+  if (!normalizedAllowedOrigins.includes(normalizedOrigin)) {
+    console.error(`CORS Rejection - Origin: "${origin}" (normalized: "${normalizedOrigin}"), Allowed: ${JSON.stringify(normalizedAllowedOrigins)}`);
     res.status(403).json({ success: false, message: 'Forbidden: Untrusted Origin.' });
     return false;
   }
