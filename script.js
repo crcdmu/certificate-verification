@@ -105,10 +105,11 @@ async function renderVerification() {
     `;
   
   } else {
-    resultContainer.innerHTML = `
-      <div class="invalid-badge">✕ RECORD NOT FOUND</div>
-      <p style="color: #7f8c8d; margin-bottom: 20px;">No authentic certificate matching ID <strong>"${requestedCertId || 'Blank'}"</strong> exists in the repository.</p>
-      <a href="/" class="btn" style="width: auto; padding: 10px 25px;">Back to Search</a>
-    `;
+resultContainer.innerHTML = `
+  <div class="invalid-badge">✕ RECORD NOT FOUND</div>
+  <p style="color: #7f8c8d; margin-bottom: 20px;">No authentic certificate matching ID <strong id="safe-id-display"></strong> exists in the repository.</p>
+  <a href="/" class="btn" style="width: auto; padding: 10px 25px;">Back to Search</a>
+`;
+document.getElementById('safe-id-display').textContent = requestedCertId || 'Blank';
   }
 }
