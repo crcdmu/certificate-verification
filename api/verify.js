@@ -4,13 +4,13 @@ const db = require('./database.json');
 const SECRET_KEY = process.env.SECRET_SALT || process.env.SECRET_KEY;
 const CERT_ID_REGEX = /^CRC-\d{8}-[A-Z0-9]{3,5}$/;
 
-// Vulnerability #1 Fix: In-memory rate limiter map for warm serverless instances
+// Vulnerability #1 Fix: In-memory rate limiter map
 const rateLimitMap = new Map();
-const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute window
-const RATE_LIMIT_MAX_REQUESTS = 10;     // Max 10 requests per IP per minute
+const RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const RATE_LIMIT_MAX_REQUESTS = 10;
 
 module.exports = function handler(req, res) {
-  // Vulnerability #4 Fix: Inject clickjacking & DOM XSS defense-in-depth headers
+  // Vulnerability #4 Fix: Security Headers
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   res.setHeader('X-Frame-Options', 'DENY');
@@ -19,39 +19,35 @@ module.exports = function handler(req, res) {
     "default-src 'self'; style-src 'self' 'unsafe-inline'; form-action 'self'; frame-ancestors 'none';"
   );
 
-const allowedOrigins = [
-    'https://verification-dmu.vercel.app', 
+  // Vulnerability #5 Fix: CORS Validation
+  const allowedOrigins = [
+    'https://verification-dmu.vercel.app',
     'http://localhost:5501',
     'http://localhost:3000'
   ];
+  
   const origin = req.headers.origin;
 
   if (origin) {
-    // Dynamically allow the production domain OR any Vercel preview branch URL
+    // Allow if in whitelist OR if it's a Vercel preview branch
     const isAllowed = allowedOrigins.includes(origin) || origin.endsWith('.vercel.app');
 
     if (!isAllowed) {
-      // Temporarily print the blocked origin in the response to help you debug
-      return res.status(403).json({ 
-        success: false, 
-        message: `Forbidden: Untrusted Origin [${origin}]` 
-      });
+      return res.status(403).json({ success: false, message: 'Forbidden: Untrusted Origin.' });
     }
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   }
-  // Handle CORS Preflight (OPTIONS)
-  if (req.method === 'OPTIONS') {
-    return res.status(204).end();
-  }
+
+  if (req.method === 'OPTIONS') return res.status(204).end();
 
   if (req.method !== 'POST') {
-    return res.status(405).json({ success: false, message: 'Method Not Allowed. Use POST.' });
+    return res.status(405).json({ success: false, message: 'Method Not Allowed.' });
   }
 
-  // Vulnerability #1 Fix: Execute rate limit evaluation
-  const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown-ip';
+  // Rate Limiting Logic
+  const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
   const now = Date.now();
   const record = rateLimitMap.get(clientIp) || { count: 0, startTime: now };
 
@@ -61,64 +57,37 @@ const allowedOrigins = [
   } else {
     record.count += 1;
     if (record.count > RATE_LIMIT_MAX_REQUESTS) {
-      return res.status(429).json({ 
-        success: false, 
-        message: 'Too many verification attempts. Please wait 60 seconds and try again.' 
-      });
+      return res.status(429).json({ success: false, message: 'Too many attempts. Wait 60s.' });
     }
   }
   rateLimitMap.set(clientIp, record);
 
-  // Validate Content-Type
-  const contentType = req.headers['content-type'] || '';
-  if (!contentType.includes('application/json')) {
-    return res.status(415).json({ success: false, message: 'Unsupported Media Type.' });
-  }
-
+  // Input Validation
   const { certificateId } = req.body || {};
   if (!certificateId || typeof certificateId !== 'string') {
-    return res.status(400).json({ success: false, message: 'Please provide a valid Certificate ID.' });
+    return res.status(400).json({ success: false, message: 'Invalid ID.' });
   }
 
   const cleanId = certificateId.trim().toUpperCase();
-  if (cleanId.length > 25 || !CERT_ID_REGEX.test(cleanId)) {
-    return res.status(400).json({ success: false, message: 'Invalid Certificate ID format.' });
+  if (!CERT_ID_REGEX.test(cleanId)) {
+    return res.status(400).json({ success: false, message: 'Invalid Format.' });
   }
 
-  // Vulnerability #3 Fix: Enforce minimum entropy on the secret key
   if (!SECRET_KEY || SECRET_KEY.length < 32) {
-    console.error("CRITICAL SECURITY ERROR: SECRET_KEY is missing or insecure (under 32 chars)!");
-    return res.status(500).json({ success: false, message: 'Internal server configuration error.' });
+    return res.status(500).json({ success: false, message: 'Server configuration error.' });
   }
 
+  // Verification Logic
   try {
-    const candidateHash = crypto
-      .createHmac('sha256', SECRET_KEY)
-      .update(cleanId)
-      .digest('hex');
-
+    const candidateHash = crypto.createHmac('sha256', SECRET_KEY).update(cleanId).digest('hex');
     const studentRecord = db[candidateHash];
 
     if (studentRecord) {
-      return res.status(200).json({ 
-        success: true, 
-        data: {
-          name: studentRecord.name,
-          programme: studentRecord.programme,
-          issuedOn: studentRecord.issuedOn,
-          status: studentRecord.status,
-          checksum: candidateHash
-        }
-      });
+      return res.status(200).json({ success: true, data: studentRecord });
     } else {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Record not found. This Certificate ID does not exist in Dhanamanjuri University CR&PC archives.' 
-      });
+      return res.status(404).json({ success: false, message: 'Record not found.' });
     }
-
   } catch (error) {
-    console.error("Secure Verification Error:", error);
-    return res.status(500).json({ success: false, message: 'Secure verification service unavailable.' });
+    return res.status(500).json({ success: false, message: 'Server error.' });
   }
 };
