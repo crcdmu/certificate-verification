@@ -1,171 +1,196 @@
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
+
 :root {
-  --dmu-red: #990000;
-  --text-main: #111827;
-  --bg-canvas: #F9FAFB;
-  --card-stroke: #E5E7EB;
+  --bg-canvas: #f6f7f9;        /* Cool institutional off-white */
+  --card-bg: #ffffff;          /* Pure white */
+  --text-main: #0f172a;        /* Deep slate black */
+  --text-muted: #64748b;       /* Crisp neutral gray */
+  --border-stroke: rgba(0, 0, 0, 0.08);
+  
+  --success-green: #059669;    /* Rich institutional emerald */
+  --success-bg: #ecfdf5;       /* Soft mint container */
+  --dmu-red: #990000;          /* Reserved for university brand accents */
 }
 
 body {
   background-color: var(--bg-canvas);
   color: var(--text-main);
-  font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  margin: 0;
-  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  min-height: 100vh;
+  display: grid;               /* Absolute viewport centering */
+  place-items: center;
+  padding: 24px;
   -webkit-font-smoothing: antialiased;
 }
 
-
+/* ==========================================
+   THE MASTER CARD CONTAINER
+========================================== */
 .card {
-    background: #f1e8db;
-    width: 100%;
-    max-width: 500px;
-    padding: 40px 30px;
-    border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-    text-align: center;
+  background: var(--card-bg);
+  width: 100%;
+  max-width: 480px;
+  padding: 48px 40px;
+  border-radius: 16px;
+  border: 1px solid var(--border-stroke);
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.05);
+  text-align: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
+/* ==========================================
+   PAGE 1: INDEX.HTML ELEMENTS
+========================================== */
 h2 {
-    color: #2c3e50;
-    margin-bottom: 10px;
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  margin-bottom: 8px;
+  color: var(--text-main);
 }
 
 .subtitle {
-    color: #7f8c8d;
-    font-size: 0.95rem;
-    margin-bottom: 25px;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  margin-bottom: 32px;
 }
 
 input[type="text"] {
-    width: 100%;
-    padding: 12px 15px;
-    margin-bottom: 20px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    font-size: 1rem;
-    transition: border 0.3s;
+  width: 100%;
+  padding: 15px 18px;
+  margin-bottom: 16px;
+  background: #f8fafc;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-main);
+  transition: all 0.2s ease;
 }
 
 input[type="text"]:focus {
-    border-color: #3498db;
-    outline: none;
+  background: #ffffff;
+  border-color: var(--text-main);
+  outline: 3px solid rgba(15, 23, 42, 0.1);
 }
 
 .btn {
-    display: inline-block;
-    width: 100%;
-    background-color: #3498db;
-    color: white;
-    padding: 12px;
-    border: none;
-    border-radius: 6px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    text-decoration: none;
-    transition: background 0.3s;
+  display: block;
+  width: 100%;
+  background-color: var(--text-main); /* High-end dark button */
+  color: #ffffff;
+  padding: 15px;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.2s ease, transform 0.1s ease;
 }
 
 .btn:hover {
-    background-color: #2980b9;
+  background-color: #334155;
 }
 
-.btn-secondary {
-    display: inline-block;
-    margin-top: 20px;
-    color: #3498db;
-    text-decoration: none;
-    font-weight: 600;
+.btn:active {
+  transform: scale(0.99);
 }
 
-.btn-secondary:hover {
-    text-decoration: underline;
-}
+/* ==========================================
+   PAGE 2: VERIFICATION PAYLOAD ELEMENTS
+========================================== */
 
-/* Verification Result Styles */
+/* Institutional Pill Badge */
 .verified-badge {
-    color: #27ae60;
-    font-size: 1.5rem;
-    margin-bottom: 25px;
-}
-
-.invalid-badge {
-    color: #e74c3c;
-    font-size: 1.5rem;
-    margin-bottom: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--success-bg);
+  color: var(--success-green);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 8px 18px;
+  border-radius: 100px;
+  border: 1px solid rgba(5, 150, 105, 0.18);
+  margin-bottom: 36px;
 }
 
 .details-grid {
-    text-align: left;
-    background: #f8f9fa;
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 20px;
+  text-align: left;
+  border-top: 1px solid var(--border-stroke);
+  margin-bottom: 32px;
 }
 
 .detail-item {
-    margin-bottom: 15px;
-    border-bottom: 1px solid #eaeaea;
-    padding-bottom: 10px;
-}
-
-.detail-item:last-child {
-    margin-bottom: 0;
-    border-bottom: none;
-    padding-bottom: 0;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border-stroke);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .detail-item span {
-    font-size: 0.85rem;
-    color: #7f8c8d;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em; /* Wide tracked sub-headers */
 }
 
 .detail-item strong {
-    display: block;
-    font-size: 1.05rem;
-    color: #2c3e50;
-    margin-top: 3px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-main);
+  letter-spacing: -0.01em; /* Tightly locked data values */
 }
 
 .status-valid {
-    color: #27ae60;
+  color: var(--success-green) !important;
+  font-weight: 700 !important;
 }
 
 .footer-note {
-    font-size: 0.85rem;
-    color: #95a5a6;
-    margin-bottom: 15px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 24px;
+  font-weight: 500;
 }
 
-.loading {
-    color: #7f8c8d;
-    font-style: italic;
+.btn-secondary {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.2s ease;
 }
 
-.print-only-header {
-  display: none; /* Invisible on the website */
-  width: 100%;
-  height: auto;
-  margin-bottom: 2rem;
+.btn-secondary:hover {
+  color: var(--text-main);
 }
 
+/* ==========================================
+   PHYSICAL PRINTER OPTIMIZATION RULES
+========================================== */
 @media print {
-  body { background: #FFFFFF; }
-  .dmu-top-bar, .no-print-buttons { display: none !important; }
-  .print-only-header { display: block !important; }
-  
-  .verified-data-card {
-    border: none;
-    box-shadow: none;
-    margin: 0;
-    padding: 0;
+  body {
+    background: none !important;
+    padding: 0 !important;
+    display: block !important;
+  }
+  .card {
+    max-width: 100% !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+  .btn-secondary, .btn {
+    display: none !important;
   }
 }
