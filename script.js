@@ -113,7 +113,7 @@ function renderRecordNotFound(displayId, customMessage) {
     // Build the "matching ID <id>" string safely
     msgContainer.textContent = "No authentic certificate matching ID ";
     const strongTag = document.createElement('strong');
-    strongTag.textContent = displayId; // Automatically escapes HTML characters
+    strongTag.textContent = displayId; 
     msgContainer.appendChild(strongTag);
     msgContainer.appendChild(document.createTextNode(" exists in the repository."));
   }
