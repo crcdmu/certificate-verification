@@ -58,6 +58,14 @@ async function renderVerification() {
 
   let studentData = JSON.parse(sessionStorage.getItem('verifiedCandidate'));
 
+  // CACHE BUSTER: If the URL ID doesn't match the stored ID, wipe it out
+  if (studentData && requestedCertId) {
+    if (studentData.queriedId !== requestedCertId.trim().toUpperCase()) {
+      studentData = null; 
+      sessionStorage.removeItem('verifiedCandidate');
+    }
+  }
+
   // Fallback: If someone arrived via a direct shared URL and skipped index.html, fetch it now
   if (!studentData && requestedCertId) {
     try {
