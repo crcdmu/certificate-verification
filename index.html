@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificate Verification</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="dmu-top-bar">
+  <div class="header-container">
+    <div class="header-titles">
+      <span class="sub-dept">Campus Recruitment & Placement Cell</span>
+      <h1>Credential Verification Portal</h1>
+    </div>
+  </div>
+</header>
+    <div class="card">
+        <h2>Certificate Verification</h2>
+        <p class="subtitle">Enter a Certificate ID to verify its authenticity.</p>
+        
+        <form id="verifyForm">
+            <input type="text" id="certId" placeholder="e.g., INT-2026-001-7F9A2C" required>
+            <button type="submit" class="btn">Verify</button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('verifyForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const id = document.getElementById('certId').value.trim();
+            window.location.href = `verify.html?id=${encodeURIComponent(id)}`;
+        });
+    </script>
+</body>
+</html>
