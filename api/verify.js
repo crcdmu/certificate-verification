@@ -22,7 +22,8 @@ module.exports = function handler(req, res) {
   // Vulnerability #5 Fix: Explicit CORS & Preflight validation
   const allowedOrigins = [
     'https://verification-dmu.vercel.app', 
-    'http://localhost:5501',
+    'https://verification-dmu.vercel.app/',
+    'https://vercel.com/crpcdmu/verification/57NKzV4sBxfkviHptHUgGypWC8tL',
     'http://localhost:3000'
   ];
   const origin = req.headers.origin;
