@@ -1,8 +1,7 @@
-// api/verify.js
-// Written in strict CommonJS to run natively on Vercel without a package.json
+const crypto = require('crypto');
+const db = require('./database.json');
 
 module.exports = function handler(req, res) {
-  // 1. Only allow POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, message: 'Method Not Allowed' });
   }
@@ -13,31 +12,38 @@ module.exports = function handler(req, res) {
     return res.status(400).json({ success: false, message: 'Please enter a Certificate ID.' });
   }
 
-  try {
-    // NATIVE COMMONJS IMPORT:
-    // This automatically tells Vercel to bundle database.json AND instantly parses it into a JS object.
-    const db = require('./database.json');
+  try { cleanId = certificateId.trim().toUpperCase();
 
-    const cleanId = certificateId.trim().toUpperCase();
-    const studentRecord = db[cleanId];
+    // 1. Convert the incoming "CRC-..." text into a one-way SHA256 hex string
+    const hashedInput = crypto
+      .createHash('sha256')
+      .update(cleanId)
+      .digest('hex');
+
+    // 2. Search the database using the HASH as the key, not the text
+    const studentRecord = db[hashedInput];
 
     if (studentRecord) {
+      // Re-inject the readable ID & the cryptographic checksum so the UI can print them
+      const securePayload = {
+        ...studentRecord,
+        issuedCertId: cleanId,
+        checksum: hashedInput
+      };
+
       return res.status(200).json({ 
         success: true, 
-        data: studentRecord 
+        data: securePayload 
       });
     } else {
       return res.status(404).json({ 
         success: false, 
-        message: 'Record not found. This Certificate ID does not exist in Dhanamanjuri University CR&PC archives.' 
+        message: 'Record not found. This Certificate ID does not exist in the secure archives.' 
       });
     }
 
   } catch (error) {
-    console.error("Vercel Execution Error:", error);
-    return res.status(500).json({ 
-      success: false, 
-      message: 'Internal Server Error: Unable to read database.' 
-    });
+    console.error("Crypto/DB Error:", error);
+    return res.status(500).json({ success: false, message: 'Secure verification service unavaliable.' });
   }
 };
