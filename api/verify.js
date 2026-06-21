@@ -40,15 +40,6 @@ module.exports = function handler(req, res) {
       .update(cleanId)
       .digest('hex');
 
-    // ==========================================
-    // 🕵️ DEBUG LOGGING (Check your Vercel Logs after running!)
-    // ==========================================
-    console.log(`[DEBUG] 1. Received Clean ID: "${cleanId}"`);
-    console.log(`[DEBUG] 2. Secret Key loaded: YES (Ends with "${SECRET_KEY.slice(-4)}")`);
-    console.log(`[DEBUG] 3. Calculated Hash: "${candidateHash}"`);
-    console.log(`[DEBUG] 4. Was hash found in DB? ${!!db[candidateHash]}`);
-    // ==========================================
-
     const studentRecord = db[candidateHash];
 
     if (studentRecord) {
