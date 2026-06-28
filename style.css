@@ -27,9 +27,9 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* ==========================================
-   THE MASTER CARD CONTAINER
-========================================== */
+
+   /*THE MASTER CARD CONTAINER */
+
 .card {
   background: var(--card-bg);
   width: 100%;
@@ -114,7 +114,7 @@ input[type="text"]:focus {
   color: var(--success-green);
   font-size: 0.82rem;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
   padding: 8px 18px;
   border-radius: 100px;
