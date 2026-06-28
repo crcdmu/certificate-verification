@@ -2,21 +2,30 @@ CERTIFICATE VERIFICATION SYSTEM
 
 
 A temporary solution for certificate verification until DMU officially make one .
-A secure, serverless web application designed to verify the authenticity of certificates issued by the Campus Recruitment & Placement Cell, Dhanamanjuri University. It provides a cryptographic, tamper-resistant way to validate student certificates through manual ID entry or QR code scanning.
+
+A secure, serverless web application designed to verify the authenticity of certificates issued by the Campus Recruitment & Placement Cell, Dhanamanjuri University. 
+It provides a cryptographic, tamper-resistant way to validate student certificates through manual ID entry or QR code scanning.
 
 🚀 Features
 
 Cryptographic Verification: Uses PBKDF2 (100,000 iterations) with a secret salt to securely hash certificate IDs, preventing offline brute-force attacks and ensuring data integrity.
+
 QR Code Ready: Automatically reads and validates certificate IDs passed via URL parameters (`?id=CRC-...`).
+
 Serverless Architecture: Built to run on Vercel as a serverless Node.js API.
+
 Rate Limiting & Anti-Abuse: In-memory rate limiting blocks enumeration attacks (max 10 requests per minute per IP).
+
 Strict Security Headers: Implements Content-Security-Policy (CSP), Strict-Transport-Security (HSTS), X-Frame-Options, and X-Content-Type-Options.
+
 Print-Optimized UI: Clean, institutional design that automatically strips UI elements when printing the verification proof.
 
 🛠 Tech Stack
 
 Frontend: HTML5, CSS3, Vanilla JavaScript (Zero dependencies)
+
 Backend: Node.js (Vercel Serverless Functions)
+
 Database Client: `google-spreadsheet` & `google-auth-library` (Connecting to Google Sheets)
 
 
@@ -55,10 +64,11 @@ Zero-Knowledge Archives: The spreadsheet stores only PBKDF2 cryptographic checks
 📝 Usage
 
 Manual Entry: Navigate to the homepage and enter a valid Certificate ID (e.g., `CRC-20250812-ABC`).
+
 QR Scan appends the ID directly to the URL:e.g. `https://verification-dmu.vercel.app/index.html?id=CRC-20250802-4M2`.
 
 
 
 📜 License
 
-This project is proprietary and built specifically for Dhanamanjuri University • CR&PC Archives.
+This project is proprietary and built specifically for Campus Recruitment & Placement Cell, Dhanamanjuri University.
