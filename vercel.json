@@ -1,8 +1,3 @@
 {
-  "routes": [
-    {
-      "src": "/api/database.json",
-      "dest": "/404"
-    }
-  ]
+  "cleanUrls": true
 }
