@@ -1,4 +1,6 @@
 CERTIFICATE VERIFICATION SYSTEM
+
+
 A temporary solution for certificate verification until DMU officially make one .
 A secure, serverless web application designed to verify the authenticity of certificates issued by the Campus Recruitment & Placement Cell, Dhanamanjuri University. It provides a cryptographic, tamper-resistant way to validate student certificates through manual ID entry or QR code scanning.
 
