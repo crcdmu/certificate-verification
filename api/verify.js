@@ -122,6 +122,9 @@ module.exports = async function handler(req, res) {
     const studentRecord = rows.find(row => row.get('Checksum') === candidateHash);
 
     if (studentRecord) {
+     
+      res.setHeader('Cache-Control', 's-maxage=2592000, stale-while-revalidate=86400');
+
       return res.status(200).json({
         success: true,
         data: {
