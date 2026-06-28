@@ -123,7 +123,7 @@ module.exports = async function handler(req, res) {
 
     if (studentRecord) {
      
-      res.setHeader('Cache-Control', 's-maxage=2592000, stale-while-revalidate=86400');
+      res.setHeader('Cache-Control', 's-maxage=604800, stale-while-revalidate=86400');
 
       return res.status(200).json({
         success: true,
