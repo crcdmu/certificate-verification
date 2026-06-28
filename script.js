@@ -90,7 +90,7 @@ function renderVerificationSuccess(studentData) {
         <strong id="safe-status" class="status-valid"></strong>
       </div>
     </div>
-    <p class="footer-note" style="margin-top:15px;">Dhanamanjuri University • CR&PC Archives</p>
+    <p class="footer-note" style="margin-top:15px;">Dhanamanjuri University • CR&PC</p>
     <button onclick="resetSearch()" class="btn-secondary" style="display:inline-block; margin-top:10px; background:none; border:none; cursor:pointer;">Verify Another ID</button>
   `;
 
