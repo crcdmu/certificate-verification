@@ -1,0 +1,9 @@
+{
+  "name": "certificate-verification",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "google-auth-library": "^9.0.0",
+    "google-spreadsheet": "^4.1.1"
+  }
+}
