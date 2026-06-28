@@ -1,7 +1,6 @@
-
-Certificate Verification System
-
-A secure, serverless web application designed to verify the authenticity of certificates issued by the Dhanamanjuri University • CR&PC Archives. It provides a cryptographic, tamper-proof way to validate student certificates through manual ID entry or QR code scanning.
+CERTIFICATE VERIFICATION SYSTEM
+A temporary solution for certificate verification until DMU officially make one .
+A secure, serverless web application designed to verify the authenticity of certificates issued by the Campus Recruitment & Placement Cell, Dhanamanjuri University. It provides a cryptographic, tamper-resistant way to validate student certificates through manual ID entry or QR code scanning.
 
 🚀 Features
 
@@ -12,13 +11,11 @@ Rate Limiting & Anti-Abuse: In-memory rate limiting blocks enumeration attacks (
 Strict Security Headers: Implements Content-Security-Policy (CSP), Strict-Transport-Security (HSTS), X-Frame-Options, and X-Content-Type-Options.
 Print-Optimized UI: Clean, institutional design that automatically strips UI elements when printing the verification proof.
 
-
-
 🛠 Tech Stack
 
 Frontend: HTML5, CSS3, Vanilla JavaScript (Zero dependencies)
 Backend: Node.js (Vercel Serverless Functions)
-Database: JSON-based local storage (`database.json`) mapped via secure cryptographic checksums.
+Database Client: `google-spreadsheet` & `google-auth-library` (Connecting to Google Sheets)
 
 
 📂 Project Structure
@@ -26,14 +23,15 @@ Database: JSON-based local storage (`database.json`) mapped via secure cryptogra
 ```text
 .
 ├── api/
-│   ├── database.json   # Mock database storing student records mapped to hashed IDs
 │   └── verify.js       # Vercel Serverless Function handling validation & security
 ├── .vscode/
 │   └── settings.json   # Local dev environment settings (Live Server)
-├── index.html          # Main frontend UI
+├── .gitignore          # Keeps private keys and local environment variables out of Git
+├── index.html          # Main frontend verification UI
+├── package.json        # Node.js backend dependencies
 ├── script.js           # Frontend logic & API communication
 ├── style.css           # Institutional styling and print media queries
-└── vercel.json         # Deployment config (Blocks direct access to the database)
+└── vercel.json         # Serverless routing configuration
 
 ```
 
@@ -41,18 +39,23 @@ Database: JSON-based local storage (`database.json`) mapped via secure cryptogra
 
 🔐 Security Architecture
 
-1. **Database Protection:** The raw `database.json` file is explicitly blocked from public access using routing rules in `vercel.json`.
-2. **CORS Enforcement:** The API rejects requests that do not originate from allowed origins or lack a browser context.
-3. **Data Sanitization:** Input certificate IDs are strictly validated against the regex pattern `^CRC-\d{8}-[A-Z0-9]{3,5}$`.
-4. **Zero-Knowledge Storage:** The database only stores cryptographic checksums (hashes) of the certificate IDs, not the raw IDs themselves.
+Private Database Storage: The Google Sheet containing student records is kept strictly private. It is shared exclusively with a Google Cloud Service Account (Editor permission), ensuring zero public exposure.
+
+Environment Variable Isolation: Private cryptographic keys are injected safely at runtime via Vercel's secure environment pipeline and are never exposed to the frontend or committed to GitHub.
+
+CORS Enforcement: The API rejects requests that do not originate from allowed institutional origins or lack a valid browser context.
+
+Input Sanitization: Incoming certificate IDs are strictly validated against the regex pattern ^CRC-\d{8}-[A-Z0-9]{3,5}$.
+
+Zero-Knowledge Archives: The spreadsheet stores only PBKDF2 cryptographic checksums of the certificate IDs, preventing reverse-engineering of raw certificate numbers even if administrator access is compromised.
 
 
 📝 Usage
 
-* **Manual Entry:** Navigate to the homepage and enter a valid Certificate ID (e.g., `CRC-20250812-ABC`).
-* **QR Scan:** Append the ID directly to the URL: `https://verification-dmu.vercel.app/index.html?id=CRC-20250802-4M2`.
+Manual Entry: Navigate to the homepage and enter a valid Certificate ID (e.g., `CRC-20250812-ABC`).
+QR Scan appends the ID directly to the URL:e.g. `https://verification-dmu.vercel.app/index.html?id=CRC-20250802-4M2`.
 
----
+
 
 📜 License
 
