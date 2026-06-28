@@ -39,7 +39,7 @@ Database: JSON-based local storage (`database.json`) mapped via secure cryptogra
 
 
 
-## 🔐 Security Architecture
+🔐 Security Architecture
 
 1. **Database Protection:** The raw `database.json` file is explicitly blocked from public access using routing rules in `vercel.json`.
 2. **CORS Enforcement:** The API rejects requests that do not originate from allowed origins or lack a browser context.
@@ -47,13 +47,13 @@ Database: JSON-based local storage (`database.json`) mapped via secure cryptogra
 4. **Zero-Knowledge Storage:** The database only stores cryptographic checksums (hashes) of the certificate IDs, not the raw IDs themselves.
 
 
-## 📝 Usage
+📝 Usage
 
 * **Manual Entry:** Navigate to the homepage and enter a valid Certificate ID (e.g., `CRC-20250812-ABC`).
 * **QR Scan:** Append the ID directly to the URL: `https://verification-dmu.vercel.app/index.html?id=CRC-20250802-4M2`.
 
 ---
 
-## 📜 License
+📜 License
 
 This project is proprietary and built specifically for Dhanamanjuri University • CR&PC Archives.
