@@ -1,3 +1,6 @@
+/* Import razor-sharp typography directly into the stylesheet */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -9,46 +12,50 @@
   --card-bg: #ffffff;          /* Pure white */
   --text-main: #0f172a;        /* Deep slate black */
   --text-muted: #64748b;       /* Crisp neutral gray */
-  --border-stroke: rgba(0, 0, 0, 0.08);
+  --border-stroke: #e2e8f0;    /* Solid crisp slate border */
   
   --success-green: #059669;    /* Rich institutional emerald */
   --success-bg: #ecfdf5;       /* Soft mint container */
-  --dmu-red: #990000;          /* Reserved for university brand accents */
+  --dmu-red: #990000;          /* Reserved university accent */
 }
 
 body {
   background-color: var(--bg-canvas);
   color: var(--text-main);
-  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   min-height: 100vh;
-  display: grid;               /* Absolute viewport centering */
+  display: grid;
   place-items: center;
   padding: 24px;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-
-   /*THE MASTER CARD CONTAINER */
-
+/* ==========================================
+   THE MASTER CARD CONTAINER
+========================================== */
 .card {
   background: var(--card-bg);
   width: 100%;
   max-width: 480px;
-  padding: 48px 40px;
+  padding: 44px 40px;
   border-radius: 16px;
-  border: 1px solid var(--border-stroke);
-  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  /* Multi-layered crisp shadow */
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.02),
+    0 12px 20px -4px rgba(0, 0, 0, 0.05);
   text-align: center;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 /* ==========================================
-   PAGE 1: INDEX.HTML ELEMENTS
+   PAGE 1: SEARCH ELEMENTS
 ========================================== */
 h2 {
-  font-size: 1.75rem;
+  font-size: 1.65rem;
   font-weight: 700;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.02em;
   margin-bottom: 8px;
   color: var(--text-main);
 }
@@ -56,123 +63,147 @@ h2 {
 .subtitle {
   color: var(--text-muted);
   font-size: 0.95rem;
-  margin-bottom: 32px;
+  margin-bottom: 28px;
+  line-height: 1.4;
 }
 
 input[type="text"] {
   width: 100%;
-  padding: 15px 18px;
+  padding: 14px 16px;
   margin-bottom: 16px;
   background: #f8fafc;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 10px;
-  font-size: 1rem;
+  border: 1px solid var(--border-stroke);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.95rem;
   font-weight: 500;
   color: var(--text-main);
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
+}
+
+input[type="text"]::placeholder {
+  color: #94a3b8;
 }
 
 input[type="text"]:focus {
   background: #ffffff;
   border-color: var(--text-main);
-  outline: 3px solid rgba(15, 23, 42, 0.1);
+  outline: 2px solid rgba(15, 23, 42, 0.08);
 }
 
 .btn {
   display: block;
   width: 100%;
-  background-color: var(--text-main); /* High-end dark button */
+  background-color: var(--text-main);
   color: #ffffff;
-  padding: 15px;
+  padding: 14px;
   border: none;
-  border-radius: 10px;
+  border-radius: 8px;
+  font-family: inherit;
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
-  text-decoration: none;
-  transition: background-color 0.2s ease, transform 0.1s ease;
+  transition: background-color 0.15s ease, transform 0.1s ease;
 }
 
 .btn:hover {
-  background-color: #334155;
+  background-color: #1e293b;
 }
 
 .btn:active {
-  transform: scale(0.99);
+  transform: scale(0.995);
 }
 
 /* ==========================================
    PAGE 2: VERIFICATION PAYLOAD ELEMENTS
 ========================================== */
-
-/* Institutional Pill Badge */
 .verified-badge {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  gap: 6px;
   background-color: var(--success-bg);
   color: var(--success-green);
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 700;
-  letter-spacing: 0.09em;
+  letter-spacing: 0.05em;
+  line-height: 1;
   text-transform: uppercase;
-  padding: 8px 18px;
+  padding: 8px 16px;
   border-radius: 100px;
-  border: 1px solid rgba(5, 150, 105, 0.18);
-  margin-bottom: 36px;
+  border: 1px solid rgba(5, 150, 105, 0.2);
+  margin-bottom: 32px;
+}
+
+.verified-badge svg {
+  display: block;
+  flex-shrink: 0;
 }
 
 .details-grid {
   text-align: left;
   border-top: 1px solid var(--border-stroke);
-  margin-bottom: 32px;
+  margin-bottom: 28px;
 }
 
 .detail-item {
-  padding: 16px 0;
+  padding: 14px 0;
   border-bottom: 1px solid var(--border-stroke);
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
 }
 
 .detail-item span {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.08em; /* Wide tracked sub-headers */
+  letter-spacing: 0.06em;
 }
 
 .detail-item strong {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 600;
   color: var(--text-main);
-  letter-spacing: -0.01em; /* Tightly locked data values */
+  /* Resetting negative letter tracking for crisp typography */
+  letter-spacing: 0; 
 }
 
 .status-valid {
   color: var(--success-green) !important;
-  font-weight: 700 !important;
+}
+
+.invalid-badge {
+  color: var(--dmu-red);
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  margin-bottom: 12px;
 }
 
 .footer-note {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  margin-bottom: 24px;
+  font-size: 0.78rem;
+  color: #94a3b8;
+  margin-bottom: 20px;
   font-weight: 500;
+  letter-spacing: 0.01em;
 }
 
 .btn-secondary {
-  font-size: 0.9rem;
+  font-family: inherit;
+  font-size: 0.88rem;
   font-weight: 600;
-  color: var(--text-muted);
+  color: var(--text-main);
+  background: #f1f5f9 !important;
+  padding: 10px 20px !important;
+  border-radius: 6px;
   text-decoration: none;
-  transition: color 0.2s ease;
+  transition: all 0.15s ease;
 }
 
 .btn-secondary:hover {
-  color: var(--text-main);
+  background: #e2e8f0 !important;
 }
 
 /* ==========================================
