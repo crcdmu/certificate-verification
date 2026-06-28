@@ -1,0 +1,9 @@
+# Local Environment Variables
+.env
+.env.local
+
+# Node Dependencies
+node_modules/
+
+# OS Files
+.DS_Store
