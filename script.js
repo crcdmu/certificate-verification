@@ -1,3 +1,12 @@
+// --- NEW: FORCE PAGE TO TOP ON RELOAD ---
+// This disables the browser's memory of where you were scrolled,
+// ensuring the animation starts from the top every single time.
+if ('scrollRestoration' in history) {
+  history.scrollRestoration = 'manual';
+}
+window.scrollTo(0, 0); 
+
+
 document.addEventListener('DOMContentLoaded', () => {
   const verifyForm = document.getElementById('verify-form');
   const searchSection = document.getElementById('search-section');
@@ -60,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// --- NEW: CUSTOM SPEED ANIMATION FUNCTION ---
+// --- CUSTOM SPEED ANIMATION FUNCTION ---
 function smoothScrollTo(targetPosition, duration) {
   const startPosition = window.scrollY;
   const distance = targetPosition - startPosition;
@@ -69,7 +78,6 @@ function smoothScrollTo(targetPosition, duration) {
   function animation(currentTime) {
     if (startTime === null) startTime = currentTime;
     const timeElapsed = currentTime - startTime;
-    // Calculate progress between 0 and 1
     const progress = Math.min(timeElapsed / duration, 1);
     
     // Easing function (Ease-in-out cubic) for a natural, gliding feel
@@ -87,7 +95,7 @@ function smoothScrollTo(targetPosition, duration) {
   requestAnimationFrame(animation);
 }
 
-// --- UPDATED: MOBILE AUTO-SCROLL WITH SPEED CONTROL ---
+// --- MOBILE AUTO-SCROLL WITH SPEED CONTROL ---
 window.addEventListener('load', () => {
   if (window.innerWidth <= 1024) {
     setTimeout(() => {
@@ -96,12 +104,10 @@ window.addEventListener('load', () => {
       if (formCard) {
         const yOffset = formCard.getBoundingClientRect().top + window.scrollY - 20;
         
-        // PARAMETER 1: Target Position (yOffset)
-        // PARAMETER 2: Duration in milliseconds (1500 = 1.5 seconds)
-        // Change '1500' to a higher number to make it even slower!
+        // 1500 = 1.5 seconds of smooth scrolling
         smoothScrollTo(yOffset, 1500);
       }
-    }, 800); // Wait 800ms after load before starting the scroll
+    }, 800); // Wait 800ms before starting the scroll
   }
 });
 
