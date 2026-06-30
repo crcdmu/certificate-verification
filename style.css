@@ -16,9 +16,7 @@
   --error-red: #dc2626;
 }
 
-/* ==========================================
-   1. MASTER RESET & ZERO SCROLL LOCK
-========================================== */
+/*  1. MASTER RESET & ZERO SCROLL LOCK */
 html, body {
   margin: 0;
   padding: 0;
@@ -46,9 +44,7 @@ body {
   width: 100vw;
 }
 
-/* ==========================================
-   HEADER
-========================================== */
+/*  HEADER */
 .top-nav {
   display: flex;
   justify-content: space-between;
@@ -89,9 +85,7 @@ body {
 .badge-text strong { font-size: 0.85rem; color: var(--text-dark); }
 .badge-text span { font-size: 0.7rem; color: var(--text-muted); }
 
-/* ==========================================
-   MAIN SPLIT LAYOUT
-========================================== */
+/* MAIN SPLIT LAYOUT */
 .split-container {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -218,9 +212,7 @@ input[type="text"]:focus { outline: none; border-color: var(--brand-navy); box-s
 .help-box strong { display: block; font-size: 0.85rem; color: var(--brand-navy); margin-bottom: 4px; }
 .help-box p { font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; }
 
-/* ==========================================
-   RESULTS OVERRIDES
-========================================== */
+/* RESULTS OVERRIDES */
 #status-message { text-align: center; margin-top: 1rem; }
 .verified-badge {
   display: flex; align-items: center; justify-content: center; gap: 8px;
@@ -235,9 +227,7 @@ input[type="text"]:focus { outline: none; border-color: var(--brand-navy); box-s
 .detail-item strong { font-size: 1.05rem; color: var(--brand-navy); }
 .invalid-badge { color: var(--error-red); font-weight: 700; font-size: 1rem; text-align: center; margin-bottom: 1rem; }
 
-/* ==========================================
-   FOOTER
-========================================== */
+/*  FOOTER */
 .site-footer {
   background: var(--brand-navy); color: white;
   padding: clamp(1rem, 2vh, 1.5rem) clamp(1.5rem, 5vw, 4rem);
@@ -258,19 +248,59 @@ input[type="text"]:focus { outline: none; border-color: var(--brand-navy); box-s
 .footer-right a { color: #94a3b8; text-decoration: none; transition: color 0.2s; }
 .footer-right a:hover { color: white; }
 
-/* ==========================================
-   RESPONSIVE BREAKPOINTS
-========================================== */
+/* RESPONSIVE BREAKPOINTS */
 
-/* Very short laptop screens (Ensures Zero Scroll doesn't cut off content) */
-@media (max-height: 700px) and (min-width: 1025px) {
-  .hero-side h1 { font-size: 2.4rem; }
+/* 1. Short laptop screens / Windowed mode (Shrinks the UI to maintain Zero Scroll) */
+@media (max-height: 800px) and (min-width: 1025px) {
+  /* Keep the scroll lock active */
+  html, body { overflow: hidden; }
+  
+  /* Tighten top and bottom navigation bars */
+  .top-nav { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+  .site-footer { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+  
+  /* Squeeze the Form Card */
+  .ui-card {
+    padding: 1.5rem; 
+    max-width: 440px; 
+  }
+  
+  /* Shrink Card Elements */
+  .doc-icon { width: 44px; height: 44px; margin-bottom: 0.5rem; }
+  .card-header h2 { font-size: 1.2rem; margin-bottom: 4px; }
+  .card-header p { font-size: 0.85rem; }
+  .card-header { margin-bottom: 1rem; }
+  
+  .input-group { margin-bottom: 1rem; }
+  input[type="text"] { padding: 12px 14px 12px 40px; font-size: 0.9rem; }
+  .input-icon { width: 16px; height: 16px; }
+  
+  .btn-primary { padding: 12px; font-size: 0.9rem; }
+  
+  .divider { margin: 1rem 0; }
+  .help-box { padding: 0.75rem; }
+  .help-box svg { width: 20px; height: 20px; }
+  .help-box strong { font-size: 0.8rem; }
+  .help-box p { font-size: 0.75rem; }
+
+  /* Shrink Hero Text to balance the page */
+  .hero-side h1 { font-size: 2.4rem; margin-bottom: 0.5rem; }
+  .hero-subtitle { margin-bottom: 1.5rem; font-size: 0.95rem; }
   .feature-list { gap: 1rem; }
-  .hero-subtitle { margin-bottom: 1rem; }
-  .ui-card { padding: 1.5rem 2rem; }
+  .feature-icon { width: 36px; height: 36px; }
+  .feature-text strong { font-size: 0.9rem; }
 }
 
-/* Tablets and below (Switches to Single Column layout & Unlocks Scrolling) */
+/* 2. Ultra-short screens (Extremely aggressive shrinking) */
+@media (max-height: 650px) and (min-width: 1025px) {
+  .top-nav, .site-footer { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+  .ui-card { padding: 1.25rem; }
+  .doc-icon { display: none; } /* Completely hides the top icon to save maximum vertical space */
+  .divider { margin: 0.75rem 0; }
+  .hero-side h1 { font-size: 2rem; }
+}
+
+/* 3. Tablets and below (Switches to Single Column layout & Unlocks Scrolling) */
 @media (max-width: 1024px) {
   html, body { 
     overflow-y: auto; 
@@ -283,29 +313,32 @@ input[type="text"]:focus { outline: none; border-color: var(--brand-navy); box-s
     padding: 3rem 2rem 1.5rem; 
     align-items: center; 
     text-align: center; 
+    height: auto;
   }
   .feature-item { align-items: center; text-align: left; }
-  .hero-background { display: none; } /* Hide overlay gradient on mobile */
+  .hero-background { display: none; } 
   
-  .form-side { padding: 1.5rem 2rem 3rem; }
+  .form-side { 
+    padding: 1.5rem 2rem 3rem; 
+    height: auto;
+  }
   
   .site-footer { flex-direction: column; gap: 1.5rem; text-align: center; }
   .footer-left { justify-content: center; }
 }
 
-/* Mobile Phones (Refines wrapping for tight spaces) */
+/* 4. Mobile Phones (Refines wrapping for tight spaces) */
 @media (max-width: 600px) {
   .top-nav { flex-wrap: wrap; gap: 1rem; justify-content: center; }
-  .header-badge { display: none; } /* Hides top-right badge to save space */
+  .header-badge { display: none; } 
   
   .hero-side h1 { font-size: 2.2rem; }
   .hero-side, .form-side { padding: 1.5rem 1rem; }
   
-  /* UPDATED: Forces footer links into a single horizontal row */
   .footer-right { 
     flex-direction: row; 
-    gap: 0.85rem; /* Tighter gap so they fit */
+    gap: 0.85rem; 
     justify-content: center; 
-    font-size: 0.75rem; /* Slightly smaller font for mobile screens */
+    font-size: 0.75rem; 
   }
 }
