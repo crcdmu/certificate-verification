@@ -53,12 +53,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const result = await response.json();
 
-      searchSection.style.display = 'none';
-      resultContainer.style.display = 'block';
-
       if (result.success && result.data) {
+        // Success: Switch to the fullscreen verified view
         renderVerificationSuccess(result.data);
       } else {
+        // Error: Stay on landing view, but swap the card content to show the error
+        document.getElementById('search-section').style.display = 'none';
+        document.getElementById('resultContainer').style.display = 'block';
         renderRecordNotFound(candidateId, result.message);
       }
     } catch (err) {
@@ -112,41 +113,20 @@ window.addEventListener('load', () => {
 });
 
 function renderVerificationSuccess(studentData) {
-  const resultContainer = document.getElementById('resultContainer');
+  // Hide Landing View, Show Verified View
+  document.getElementById('landing-view').style.display = 'none';
+  const verifiedView = document.getElementById('verified-view');
+  verifiedView.style.display = 'flex'; // Trigger flex layout
   
-  resultContainer.setAttribute('data-cryptographic-checksum', studentData.checksum);
-  resultContainer.setAttribute('data-verification-timestamp', new Date().toISOString());
+  // Optional: Set metadata on the container
+  verifiedView.setAttribute('data-cryptographic-checksum', studentData.checksum);
+  verifiedView.setAttribute('data-verification-timestamp', new Date().toISOString());
 
-  resultContainer.innerHTML = `
-    <div class="verified-badge">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-      Official Record Verified
-    </div>
-    <div class="details-grid">
-      <div class="detail-item">
-        <span>Candidate Name</span>
-        <strong id="safe-name"></strong>
-      </div>
-      <div class="detail-item">
-        <span>Programme</span>
-        <strong id="safe-prog"></strong>
-      </div>
-      <div class="detail-item">
-        <span>Issued Date</span>
-        <strong id="safe-issued"></strong>
-      </div>
-      <div class="detail-item">
-        <span>Archive Status</span>
-        <strong id="safe-status" style="color: var(--success-green);"></strong>
-      </div>
-    </div>
-    <button onclick="resetSearch()" class="btn-primary" style="margin-top: 1rem; background: #f1f5f9; color: var(--brand-navy);">Verify Another ID</button>
-  `;
-
-  document.getElementById('safe-name').textContent = studentData.name;
-  document.getElementById('safe-prog').textContent = studentData.programme;
-  document.getElementById('safe-issued').textContent = studentData.issuedOn;
-  document.getElementById('safe-status').textContent = studentData.status;
+  // Populate the new data card
+  document.getElementById('vd-name').textContent = studentData.name;
+  document.getElementById('vd-prog').textContent = studentData.programme;
+  document.getElementById('vd-date').textContent = studentData.issuedOn;
+  document.getElementById('vd-status').textContent = studentData.status;
 }
 
 function renderRecordNotFound(displayId, customMessage) {
@@ -175,8 +155,18 @@ function renderRecordNotFound(displayId, customMessage) {
 }
 
 window.resetSearch = function() {
+  // Reset Display States
+  document.getElementById('landing-view').style.display = 'grid'; // Restore the split-container grid
+  document.getElementById('verified-view').style.display = 'none';
+  
+  // Reset Card States inside Landing View
   document.getElementById('search-section').style.display = 'block';
   document.getElementById('resultContainer').style.display = 'none';
+  
+  // Reset Inputs
   document.getElementById('cert-id-input').value = '';
   document.getElementById('status-message').innerText = '';
 };
+
+
+
