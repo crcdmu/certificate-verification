@@ -228,12 +228,19 @@ input[type="text"]:focus { outline: none; border-color: var(--brand-navy); box-s
 .invalid-badge { color: var(--error-red); font-weight: 700; font-size: 1rem; text-align: center; margin-bottom: 1rem; }
 
 /*  FOOTER */
+
 .site-footer {
-  background: var(--brand-navy); color: white;
-  padding: clamp(1rem, 2vh, 1.5rem) clamp(1.5rem, 5vw, 4rem);
-  display: flex; justify-content: space-between; align-items: center;
-  font-size: 0.8rem; flex-shrink: 0;
+  background: var(--brand-navy); 
+  color: white;
+  /* Increased the vertical padding here to make it taller */
+  padding: clamp(1.5rem, 3vh, 2rem) clamp(1.5rem, 5vw, 4rem);
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center;
+  font-size: 0.8rem; 
+  flex-shrink: 0;
 }
+
 .footer-left { display: flex; align-items: center; gap: 12px; }
 .footer-logo {
   width: 28px; height: 28px; background: white; color: var(--brand-navy);
