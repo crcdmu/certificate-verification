@@ -16,9 +16,8 @@
   --error-red: #dc2626;
 }
 
-/* ========================================================= */
-/* 1. MASTER RESET & BASE STYLES                             */
-/* ========================================================= */
+/* 1. MASTER RESET & BASE STYLES */
+
 html, body {
   margin: 0;
   padding: 0;
@@ -45,9 +44,8 @@ body {
   width: 100vw;
 }
 
-/* ========================================================= */
 /* 2. HEADER                                                 */
-/* ========================================================= */
+
 .top-nav {
   display: flex;
   justify-content: space-between;
@@ -78,9 +76,8 @@ body {
 .badge-text strong { font-size: 0.85rem; color: var(--text-dark); }
 .badge-text span { font-size: 0.7rem; color: var(--text-muted); }
 
-/* ========================================================= */
-/* 3. LANDING PAGE (VIEW 1)                                  */
-/* ========================================================= */
+/*  LANDING PAGE (VIEW 1) */
+
 .split-container {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -173,9 +170,8 @@ input[type="text"]:focus { outline: none; border-color: var(--brand-navy); box-s
 .invalid-badge { color: var(--error-red); font-weight: 700; font-size: 1rem; text-align: center; margin-bottom: 1rem; }
 
 
-/* ========================================================= */
-/* 4. VERIFIED SCREEN (VIEW 2) - HEIGHT ISSUE FIXED          */
-/* ========================================================= */
+
+/* VERIFIED SCREEN (VIEW 2)     */
 
 .verified-fullscreen-view {
     display: flex;
@@ -275,9 +271,9 @@ input[type="text"]:focus { outline: none; border-color: var(--brand-navy); box-s
 .verify-another-btn:hover { background-color: #e2e8f0; }
 
 
-/* ========================================================= */
-/* 5. FOOTER                                                 */
-/* ========================================================= */
+
+/*  FOOTER                                                 */
+
 .site-footer {
   background: var(--brand-navy); color: white;
   padding: clamp(1.5rem, 3vh, 2.5rem) clamp(1.5rem, 5vw, 4rem);
@@ -300,9 +296,8 @@ input[type="text"]:focus { outline: none; border-color: var(--brand-navy); box-s
 .footer-right a:hover { color: white; }
 
 
-/* ========================================================= */
-/* 6. RESPONSIVE BREAKPOINTS                                 */
-/* ========================================================= */
+/*  RESPONSIVE BREAKPOINTS                                 */
+
 
 /* Short laptop screens (Landing Page Adjustments) */
 @media (max-height: 800px) and (min-width: 1025px) {
@@ -348,4 +343,46 @@ input[type="text"]:focus { outline: none; border-color: var(--brand-navy); box-s
   .hero-side h1, .status-heading { font-size: 2.2rem; }
   .hero-side, .form-side, .status-panel, .details-panel { padding: 1.5rem 1rem; }
   .footer-right { flex-direction: row; gap: 0.85rem; justify-content: center; font-size: 0.75rem; }
+}
+
+/* 7. AGGRESSIVE HEIGHT COMPRESSION FOR LAPTOPS              */
+
+@media (max-height: 850px) {
+  /* Reduce outer panel padding */
+  .status-panel, .details-panel { 
+    padding: 1rem; 
+  }
+  
+  /* Shrink the Status Side */
+  .pulse-ring-outer { padding: 0.75rem; }
+  .pulse-ring-inner { padding: 0.75rem; }
+  .check-circle { width: 56px; height: 56px; }
+  .check-circle svg { width: 28px; height: 28px; }
+  
+  .status-heading { font-size: 1.6rem; margin: 0.5rem 0 0.25rem; }
+  .status-description { font-size: 0.95rem; margin-bottom: 1rem; }
+  .database-badge { padding: 0.65rem 1rem; font-size: 0.8rem; }
+  
+  /* Shrink the Data Card Side */
+  .data-card { 
+    padding: 1.25rem 1.5rem; 
+  }
+  
+  .data-card-header { margin-bottom: 0.75rem; }
+  .data-item { padding: 0.6rem 0; gap: 1rem; }
+  .authority-item { padding-bottom: 1rem; }
+  
+  /* Shrink List Icons & Typography */
+  .data-item .icon-box { width: 36px; height: 36px; }
+  .data-item .icon-box svg { width: 16px; height: 16px; }
+  
+  .data-label { font-size: 0.7rem; }
+  .data-value { font-size: 1rem; }
+  .authority-text { font-size: 0.9rem; }
+  
+  /* Shrink the Action Button */
+  .verify-another-btn { 
+    padding: 10px; 
+    font-size: 0.9rem; 
+  }
 }
