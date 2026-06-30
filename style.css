@@ -184,22 +184,31 @@ input[type="text"]:focus { outline: none; border-color: var(--brand-navy); box-s
     align-items: stretch;
 }
 
-/* This adds the building as a background covering the bottom-left area */
 .verified-fullscreen-view::before {
     content: ''; 
     position: absolute; 
-    bottom: 0; 
-    left: 0; 
-    width: 100%; 
-    height: 100%; /* Covers the whole area to allow for natural fading */
+    top: 0; left: 0; width: 100%; height: 100%;
     
-    /* Point this to your saved file name */
+    /* This creates the watermark effect */
     background: url('background.png') no-repeat bottom left; 
-    background-size: contain; /* Keeps the building aspect ratio intact */
-    pointer-events: none; /* Allows users to click buttons on top of it */
+    background-size: cover; 
+    pointer-events: none; 
+    z-index: 1;
+}
+.verified-fullscreen-view::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(90deg, rgba(248,250,252,0.2) 0%, var(--bg-main) 80%);
+    pointer-events: none;
     z-index: 1;
 }
 
+/* Ensure all content sits above the background and gradient */
+.status-panel, .details-panel {
+    z-index: 2;
+    position: relative;
+}
 .status-panel, .details-panel {
     flex: 1;
     display: flex;
@@ -399,23 +408,20 @@ input[type="text"]:focus { outline: none; border-color: var(--brand-navy); box-s
 
 /* 8. LANDING PAGE BACKGROUND IMAGE                          */
 .split-container {
-    position: relative; /* Necessary for the background to anchor correctly */
+    position: relative;
+    background: url('background.png') no-repeat bottom left;
+    background-size: 50%; /* Adjust to your liking */
+    background-attachment: fixed; /* Keeps it locked while content scrolls */
 }
 
 .split-container::before {
     content: '';
     position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: url('background.png') no-repeat bottom left; 
-    background-size: 60%; /* Keeps it contained to the left side */
-    opacity: 0.08; /* Even subtler than the verified screen */
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(90deg, rgba(248,250,252,0.6) 0%, rgba(248,250,252,0.95) 70%);
+    z-index: 1;
     pointer-events: none;
-    z-index: 1; /* Sits behind the hero content */
 }
-
 /* Ensure content stays on top of the background */
 .hero-content, .ui-card {
     position: relative;
