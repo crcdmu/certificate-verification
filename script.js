@@ -155,18 +155,11 @@ function renderRecordNotFound(displayId, customMessage) {
 }
 
 window.resetSearch = function() {
-  // Reset Display States
-  document.getElementById('landing-view').style.display = 'grid'; // Restore the split-container grid
-  document.getElementById('verified-view').style.display = 'none';
-  
-  // Reset Card States inside Landing View
-  document.getElementById('search-section').style.display = 'block';
-  document.getElementById('resultContainer').style.display = 'none';
-  
-  // Reset Inputs
+  // Refreshes the page and drops any '?id=' parameters from the URL
+  window.location.href = window.location.pathname;
+    // Reset Inputs
   document.getElementById('cert-id-input').value = '';
   document.getElementById('status-message').innerText = '';
 };
-
 
 
