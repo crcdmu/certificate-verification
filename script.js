@@ -116,14 +116,13 @@ window.addEventListener('load', () => {
 });
 
 
+
 function renderVerificationSuccess(studentData) {
   // Hide Landing View, Show Verified View
   document.getElementById('landing-view').style.display = 'none';
   const verifiedView = document.getElementById('verified-view');
   verifiedView.style.display = 'flex'; 
   
-  // Set metadata on the container
-  verifiedView.setAttribute('data-cryptographic-checksum', studentData.checksum);
   verifiedView.setAttribute('data-verification-timestamp', new Date().toISOString());
 
   // Populate the new data card
@@ -138,12 +137,11 @@ function renderVerificationSuccess(studentData) {
       const detailsPanel = document.querySelector('.details-panel');
       if (detailsPanel) {
         const yOffset = detailsPanel.getBoundingClientRect().top + window.scrollY - 20;
-        smoothScrollTo(yOffset, 1500); // Matches the 1.5s landing page animation
+        smoothScrollTo(yOffset, 1500);
       }
-    }, 400); // Short delay to allow the DOM to render the new view first
+    }, 400);
   }
 }
-
 
 function renderRecordNotFound(displayId, customMessage) {
   const resultContainer = document.getElementById('resultContainer');
