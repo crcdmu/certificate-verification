@@ -396,3 +396,28 @@ input[type="text"]:focus { outline: none; border-color: var(--brand-navy); box-s
     font-size: 0.9rem; 
   }
 }
+
+/* 8. LANDING PAGE BACKGROUND IMAGE                          */
+.split-container {
+    position: relative; /* Necessary for the background to anchor correctly */
+}
+
+.split-container::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('background.png') no-repeat bottom left; 
+    background-size: 60%; /* Keeps it contained to the left side */
+    opacity: 0.08; /* Even subtler than the verified screen */
+    pointer-events: none;
+    z-index: 1; /* Sits behind the hero content */
+}
+
+/* Ensure content stays on top of the background */
+.hero-content, .ui-card {
+    position: relative;
+    z-index: 2;
+}
