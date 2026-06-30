@@ -352,17 +352,16 @@ input[type="text"]:focus { outline: none; border-color: var(--brand-navy); box-s
 
 /* VERIFIED FULLSCREEN VIEW */
 
-
 .verified-fullscreen-view {
     display: flex;
     flex-direction: row;
     flex: 1;
     background-color: var(--bg-main);
-    overflow: hidden;
+    overflow-y: auto; 
+    overflow-x: hidden;
     position: relative;
 }
 
-/* Optional: Faded building background if you add the image */
 .verified-fullscreen-view::before {
     content: '';
     position: absolute;
@@ -437,23 +436,22 @@ input[type="text"]:focus { outline: none; border-color: var(--brand-navy); box-s
     font-size: 0.9rem;
 }
 
+
 .details-panel {
     flex: 1;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem;
-    z-index: 2;
+    justify-content: flex-end;
+    padding: 1rem 0; /* Adds a safe buffer at the top/bottom */
 }
 
 .data-card {
-    background-color: var(--bg-card);
+     background-color: var(--bg-card);
     border-radius: 16px;
-    padding: 2.5rem;
+    padding: 2rem; /* Reduced from 2.5rem */
     width: 100%;
     max-width: 480px;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0,0,0,0.05);
-    border: 1px solid rgba(0,0,0,0.04);
+    margin: auto 0 auto auto; /* Safely centers vertically, pushes right */
 }
 
 .data-card-header {
@@ -483,16 +481,19 @@ input[type="text"]:focus { outline: none; border-color: var(--brand-navy); box-s
 
 .data-list { display: flex; flex-direction: column; }
 
+
 .data-item {
     display: flex;
     align-items: center;
     gap: 1.25rem;
-    padding: 1.25rem 0;
+    padding: 0.85rem 0; /* Reduced from 1.25rem to shrink card height */
     border-bottom: 1px solid var(--border-color);
 }
 
-.authority-item { border-bottom: none; padding-bottom: 2rem; }
-
+.authority-item {
+    border-bottom: none;
+    padding-bottom: 1.25rem; /* Reduced from 2rem */
+}
 .data-item .icon-box {
     background-color: #f8fafc;
     width: 48px;
