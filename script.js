@@ -174,3 +174,23 @@ window.resetSearch = function() {
   // This acts as a hard reset, so resetting input values manually afterward is unnecessary.
   window.location.href = window.location.pathname;
 };
+
+// Help link: mailto with Gmail fallback
+
+document.getElementById('help-link').addEventListener('click', function(e) {
+  e.preventDefault();
+  
+  const email = 'crcdmu.manipur@gmail.com';
+  const subject = 'Certificate Verification Help';
+  const mailtoUrl = `mailto:${email}?subject=${encodeURIComponent(subject)}`;
+  
+  // Try opening in a new window (triggers desktop client if available)
+  const mailWindow = window.open(mailtoUrl, '_blank');
+  
+  // If it didn't work after a short delay, fallback to Gmail web compose
+  setTimeout(() => {
+    if (mailWindow && !mailWindow.closed) return; // mailto worked
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${encodeURIComponent(subject)}`;
+    window.open(gmailUrl, '_blank');
+  }, 500);
+});
