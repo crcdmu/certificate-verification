@@ -70,6 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+
 // --- CUSTOM SPEED ANIMATION FUNCTION ---
 function smoothScrollTo(targetPosition, duration) {
   const startPosition = window.scrollY;
@@ -96,29 +97,33 @@ function smoothScrollTo(targetPosition, duration) {
   requestAnimationFrame(animation);
 }
 
-// --- MOBILE AUTO-SCROLL WITH SPEED CONTROL ---
+
+// --- MOBILE AUTO-SCROLL (LANDING PAGE ONLY) ---
 window.addEventListener('load', () => {
-  if (window.innerWidth <= 1024) {
+  const urlParams = new URLSearchParams(window.location.search);
+  
+  // Only trigger the landing page scroll if we are NOT loading a QR code
+  if (!urlParams.get('id') && window.innerWidth <= 1024) {
     setTimeout(() => {
       const formCard = document.querySelector('.form-side');
       
-      if (formCard) {
+      // Ensure the form side is actually visible before trying to scroll to it
+      if (formCard && formCard.style.display !== 'none') {
         const yOffset = formCard.getBoundingClientRect().top + window.scrollY - 20;
-        
-        // 1500 = 1.5 seconds of smooth scrolling
-        smoothScrollTo(yOffset, 1500);
+        smoothScrollTo(yOffset, 1500); // 1.5 seconds smooth scroll
       }
-    }, 800); // Wait 800ms before starting the scroll
+    }, 800); 
   }
 });
+
 
 function renderVerificationSuccess(studentData) {
   // Hide Landing View, Show Verified View
   document.getElementById('landing-view').style.display = 'none';
   const verifiedView = document.getElementById('verified-view');
-  verifiedView.style.display = 'flex'; // Trigger flex layout
+  verifiedView.style.display = 'flex'; 
   
-  // Optional: Set metadata on the container
+  // Set metadata on the container
   verifiedView.setAttribute('data-cryptographic-checksum', studentData.checksum);
   verifiedView.setAttribute('data-verification-timestamp', new Date().toISOString());
 
@@ -127,7 +132,19 @@ function renderVerificationSuccess(studentData) {
   document.getElementById('vd-prog').textContent = studentData.programme;
   document.getElementById('vd-date').textContent = studentData.issuedOn;
   document.getElementById('vd-status').textContent = studentData.status;
+
+  // --- MOBILE AUTO-SCROLL (VERIFIED VIEW) ---
+  if (window.innerWidth <= 1024) {
+    setTimeout(() => {
+      const detailsPanel = document.querySelector('.details-panel');
+      if (detailsPanel) {
+        const yOffset = detailsPanel.getBoundingClientRect().top + window.scrollY - 20;
+        smoothScrollTo(yOffset, 1500); // Matches the 1.5s landing page animation
+      }
+    }, 400); // Short delay to allow the DOM to render the new view first
+  }
 }
+
 
 function renderRecordNotFound(displayId, customMessage) {
   const resultContainer = document.getElementById('resultContainer');
@@ -154,12 +171,9 @@ function renderRecordNotFound(displayId, customMessage) {
   }
 }
 
+
 window.resetSearch = function() {
   // Refreshes the page and drops any '?id=' parameters from the URL
+  // This acts as a hard reset, so resetting input values manually afterward is unnecessary.
   window.location.href = window.location.pathname;
-    // Reset Inputs
-  document.getElementById('cert-id-input').value = '';
-  document.getElementById('status-message').innerText = '';
 };
-
-
