@@ -14,6 +14,35 @@ document.addEventListener('DOMContentLoaded', () => {
     if(inputField) inputField.value = scannedId;
     runVerification(scannedId);
   }
+document.addEventListener('DOMContentLoaded', () => {
+  const verifyForm = document.getElementById('verify-form');
+  const searchSection = document.getElementById('search-section');
+  const resultContainer = document.getElementById('resultContainer');
+  const statusDisplay = document.getElementById('status-message');
+
+  // --- NEW: URL Parameter Check for QR Codes ---
+  const urlParams = new URLSearchParams(window.location.search);
+  const scannedId = urlParams.get('id');
+
+  if (scannedId) {
+    const inputField = document.getElementById('cert-id-input');
+    if(inputField) inputField.value = scannedId;
+    runVerification(scannedId);
+  }
+
+  // --- NEW: Mobile Auto-Scroll ---
+  // If the screen is mobile/tablet size, wait 800ms then gently scroll to the card
+  if (window.innerWidth <= 1024) {
+    setTimeout(() => {
+      const formCard = document.querySelector('.ui-card');
+      if (formCard) {
+        formCard.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center' // This centers the card perfectly on the phone screen
+        });
+      }
+    }, 800);
+  }
 
   // --- Existing Manual Form Submission ---
   if (verifyForm) {
@@ -131,3 +160,5 @@ window.resetSearch = function() {
   document.getElementById('cert-id-input').value = '';
   document.getElementById('status-message').innerText = '';
 };
+
+
