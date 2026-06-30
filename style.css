@@ -336,7 +336,18 @@ input[type="text"]:focus { outline: none; border-color: var(--brand-navy); box-s
 .footer-right a { color: #94a3b8; text-decoration: none; transition: color 0.2s; }
 .footer-right a:hover { color: white; }
 
-
+/*Screen reader*/
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
 /* RESPONSIVE BREAKPOINTS                                 */
 
 /* Short laptop screens (Landing Page Adjustments) */

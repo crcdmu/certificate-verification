@@ -1,29 +1,32 @@
 const crypto = require('crypto');
 const { GoogleSpreadsheet } = require('google-spreadsheet');
 const { JWT } = require('google-auth-library');
+const { kv } = require('@vercel/kv'); // Using Vercel KV for distributed state
 
 const SECRET_KEY = process.env.SECRET_SALT || process.env.SECRET_KEY;
 const CERT_ID_REGEX = /^CRC-\d{8}-[A-Z0-9]{3,5}$/;
 
-// 1. IN-MEMORY RATE LIMITER
-const rateLimitMap = new Map();
-const WINDOW_MS = 60 * 1000; // 1 minute
-const MAX_REQUESTS = 10;     // Max 10 attempts per minute per IP
+// 1. DISTRIBUTED KV RATE LIMITER
+const WINDOW_SECS = 60; // 1 minute window
+const MAX_REQUESTS = 10; // Max 10 attempts per minute per IP
 
-function isRateLimited(ip) {
-  const now = Date.now();
-  if (!rateLimitMap.has(ip)) {
-    rateLimitMap.set(ip, { count: 1, startTime: now });
+async function isRateLimited(ip) {
+  const key = `ratelimit:${ip}`;
+  try {
+    const currentRequests = await kv.get(key) || 0;
+    if (currentRequests >= MAX_REQUESTS) return true;
+    
+    const pipeline = kv.pipeline();
+    pipeline.incr(key);
+    if (currentRequests === 0) {
+      pipeline.expire(key, WINDOW_SECS);
+    }
+    await pipeline.exec();
     return false;
+  } catch (error) {
+    console.error('KV Rate Limit Error:', error);
+    return false; // Fail open so real users aren't blocked if KV blips
   }
-  const record = rateLimitMap.get(ip);
-  if (now - record.startTime > WINDOW_MS) {
-    rateLimitMap.set(ip, { count: 1, startTime: now });
-    return false;
-  }
-  if (record.count >= MAX_REQUESTS) return true;
-  record.count++;
-  return false;
 }
 
 function setSecurityHeaders(res) {
@@ -76,10 +79,9 @@ function generateHash(certificateId) {
   return crypto.pbkdf2Sync(certificateId, SECRET_KEY, 100000, 32, 'sha256').toString('hex');
 }
 
-// 2. GOOGLE SHEETS AUTHENTICATION CLIENT
+// 2. GOOGLE SHEETS AUTHENTICATION
 const serviceAccountAuth = new JWT({
   email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-  // Vercel stores newline characters as literally "\n", this regex fixes it:
   key: process.env.GOOGLE_PRIVATE_KEY ? process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n') : '',
   scopes: ['https://www.googleapis.com/auth/spreadsheets'],
 });
@@ -92,16 +94,15 @@ module.exports = async function handler(req, res) {
   }
 
   const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
-  if (isRateLimited(clientIp)) {
+  const rateLimited = await isRateLimited(clientIp);
+  
+  if (rateLimited) {
     return res.status(429).json({ success: false, message: 'Too many requests. Please try again later.' });
   }
 
   if (!validateCORS(req, res)) return;
   if (req.method === 'OPTIONS') return res.status(204).end();
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ success: false, message: 'Method Not Allowed.' });
-  }
+  if (req.method !== 'POST') return res.status(405).json({ success: false, message: 'Method Not Allowed.' });
 
   const { certificateId } = req.body || {};
   const validation = validateCertificateId(certificateId);
@@ -113,28 +114,40 @@ module.exports = async function handler(req, res) {
   try {
     const candidateHash = generateHash(validation.cleanId);
 
-    // 3. FETCH RECORD FROM GOOGLE SHEET
+    // 3. FAST INDEXED LOOKUP (Vercel KV)
+    const cachedRecord = await kv.get(`cert:${candidateHash}`);
+    if (cachedRecord) {
+      return res.status(200).json({ success: true, data: cachedRecord });
+    }
+
+    // 4. FALLBACK TO GOOGLE SHEETS & REBUILD INDEX
     const doc = new GoogleSpreadsheet(process.env.GOOGLE_SHEET_ID, serviceAccountAuth);
     await doc.loadInfo();
-    const sheet = doc.sheetsByIndex[0]; // Gets the first tab
+    const sheet = doc.sheetsByIndex[0];
     const rows = await sheet.getRows();
 
-    const studentRecord = rows.find(row => row.get('Checksum') === candidateHash);
+    // Cache the entire sheet temporarily (1 hour) into KV to prevent future linear scans
+    const pipeline = kv.pipeline();
+    let foundRecord = null;
 
-    if (studentRecord) {
-     
-      res.setHeader('Cache-Control', 's-maxage=604800, stale-while-revalidate=86400');
+    for (const row of rows) {
+      const hash = row.get('Checksum');
+      const studentData = {
+        name: row.get('Name'),
+        programme: row.get('Programme'),
+        issuedOn: row.get('IssuedOn'),
+        status: row.get('Status')
+      };
+      
+      pipeline.set(`cert:${hash}`, studentData, { ex: 3600 }); // Cache for 1 hour
+      if (hash === candidateHash) foundRecord = studentData;
+    }
+    
+    await pipeline.exec(); // Execute batch index update
 
-      return res.status(200).json({
-        success: true,
-        data: {
-          name: studentRecord.get('Name'),
-          programme: studentRecord.get('Programme'),
-          issuedOn: studentRecord.get('IssuedOn'),
-          status: studentRecord.get('Status'),
-          checksum: candidateHash
-        }
-      });
+    if (foundRecord) {
+      
+      return res.status(200).json({ success: true, data: foundRecord });
     }
 
     return res.status(404).json({ success: false, message: 'Record not found.' });

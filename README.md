@@ -1,32 +1,19 @@
-CERTIFICATE VERIFICATION SYSTEM
-
-
-A temporary solution for certificate verification until DMU officially make one .
+# CERTIFICATE VERIFICATION SYSTEM
 
 A secure, serverless web application designed to verify the authenticity of certificates issued by the Campus Recruitment & Placement Cell, Dhanamanjuri University. 
-It provides a cryptographic, tamper-resistant way to validate student certificates through manual ID entry or QR code scanning.
 
 🚀 Features
-
-Cryptographic Verification: Uses PBKDF2 (100,000 iterations) with a secret salt to securely hash certificate IDs, preventing offline brute-force attacks and ensuring data integrity.
-
-QR Code Ready: Automatically reads and validates certificate IDs passed via URL parameters (`?id=CRC-...`).
-
-Serverless Architecture: Built to run on Vercel as a serverless Node.js API.
-
-Rate Limiting & Anti-Abuse: In-memory rate limiting blocks enumeration attacks (max 10 requests per minute per IP).
-
-Strict Security Headers: Implements Content-Security-Policy (CSP), Strict-Transport-Security (HSTS), X-Frame-Options, and X-Content-Type-Options.
-
-Print-Optimized UI: Clean, institutional design that automatically strips UI elements when printing the verification proof.
+* **Cryptographic Verification**: Uses PBKDF2 (100,000 iterations) with a secret salt to securely hash certificate IDs before checking against the private database.
+* **QR Code Ready**: Automatically reads and validates IDs passed via URL parameters (`?id=CRC-...`).
+* **Serverless Architecture**: Built to run on Vercel as a serverless Node.js API.
+* **Distributed Rate Limiting & Anti-Abuse**: Uses **Vercel KV (Redis)** for true distributed rate limiting to stop brute-force enumeration attacks across all deployed instances.
+* **Indexed Lookups**: Uses KV to cache and index Google Sheet records for O(1) lightning-fast lookups, mitigating Google API bottlenecks.
 
 🛠 Tech Stack
+* Frontend: HTML5, CSS3, Vanilla JavaScript (Zero dependencies)
+* Backend: Node.js (Vercel Serverless)
+* Database/Cache: Google Sheets API + `@vercel/kv` (Redis)
 
-Frontend: HTML5, CSS3, Vanilla JavaScript (Zero dependencies)
-
-Backend: Node.js (Vercel Serverless Functions)
-
-Database Client: `google-spreadsheet` & `google-auth-library` (Connecting to Google Sheets)
 
 
 📂 Project Structure
