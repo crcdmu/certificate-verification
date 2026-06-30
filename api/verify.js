@@ -1,7 +1,12 @@
 const crypto = require('crypto');
 const { GoogleSpreadsheet } = require('google-spreadsheet');
 const { JWT } = require('google-auth-library');
-const { kv } = require('@vercel/kv'); // Using Vercel KV for distributed state
+
+// FIX: Initialize the KV client using your specific connection URL string
+const { createClient } = require('@vercel/kv');
+const kv = createClient({
+  url: process.env.KV_URL || process.env.KV_REST_API_URL
+});
 
 const SECRET_KEY = process.env.SECRET_SALT || process.env.SECRET_KEY;
 const CERT_ID_REGEX = /^CRC-\d{8}-[A-Z0-9]{3,5}$/;
