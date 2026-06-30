@@ -42,11 +42,11 @@ body {
   flex-direction: column;
   height: 100vh;
   width: 100vw;
-  /* Apply the background to the main wrapper so it flows behind the transparent header */
-  background: url('background.png') no-repeat center bottom;
+  /* Fixed background anchoring so it scales better across screens */
+  background: #f8fafc url('background.png') no-repeat center bottom;
   background-size: cover;
+  background-attachment: fixed;
 }
-
 /* 2. HEADER                                                 */
 
 .top-nav {
@@ -200,12 +200,13 @@ input[type="text"]:focus { outline: none; border-color: var(--brand-navy); box-s
     display: flex;
     flex-direction: row;
     flex: 1;
-    background-color: transparent;
+    /* Added a slight semi-transparent white overlay so the text doesn't clash with the building */
+    background-color: rgba(248, 250, 252, 0.75);
+    backdrop-filter: blur(2px);
     overflow-y: auto; 
     overflow-x: hidden;
     position: relative;
 }
-
 .status-panel, .details-panel {
     flex: 1;
     display: flex;
