@@ -484,3 +484,18 @@ input[type="text"]:focus { outline: none; border-color: var(--brand-navy); box-s
   align-items: center;
   gap: 12px;
 }
+
+/* Make help box clickable */
+a.help-box {
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+a.help-box:hover {
+  background: #e0efff;
+}
