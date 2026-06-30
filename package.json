@@ -2,9 +2,9 @@
   "name": "certificate-verification",
   "version": "1.0.0",
   "private": true,
-  "dependencies": {
-    "@vercel/kv": "^3.0.0",
-    "google-auth-library": "^9.0.0",
-    "google-spreadsheet": "^4.1.1"
-  }
+ "dependencies": {
+  "google-auth-library": "^9.0.0",
+  "google-spreadsheet": "^4.1.1",
+  "redis": "^4.7.0"
+}
 }
