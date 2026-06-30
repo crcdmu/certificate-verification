@@ -441,3 +441,46 @@ input[type="text"]:focus { outline: none; border-color: var(--brand-navy); box-s
     font-size: 0.9rem; 
   }
 }
+
+
+/* HEADER LOGO                         */
+
+
+/* Remove old placeholder */
+.logo-area .logo-placeholder {
+  display: none;
+}
+
+/* New logo image */
+.header-logo {
+  width: clamp(40px, 5vw, 52px);
+  height: clamp(40px, 5vw, 52px);
+  object-fit: contain;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+
+/* FOOTER LOGO                         */
+
+
+/* Remove old placeholder */
+.footer-logo {
+  display: none;
+}
+
+/* New footer logo image */
+.footer-logo-img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+/* Make footer-left align properly with image */
+.footer-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
