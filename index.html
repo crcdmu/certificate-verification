@@ -3,26 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Certificate Verification</title>
+    
+    <!-- Primary Meta Tags -->
+    <title>Certificate Verification | CR&PC, Dhanamanjuri University</title>
+    <meta name="title" content="Certificate Verification | CR&PC, Dhanamanjuri University">
+    <meta name="description" content="certificate verification portal for the Campus Recruitment & Placement Cell, Dhanamanjuri University. Verify student certificate authenticity.">
+    <meta name="keywords" content="Dhanamanjuri University, DMU, CR&PC, Certificate Verification, Placement Cell">
+    <meta name="robots" content="index, follow">
+    
+    <!-- Open Graph / Facebook / WhatsApp -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://verification-dmu.vercel.app/">
+    <meta property="og:title" content="Certificate Verification | CR&PC, DMU">
+    <meta property="og:description" content="certificate verification portal for the Campus Recruitment & Placement Cell, Dhanamanjuri University.">
+   
+    <!-- <meta property="og:image" content="https://verification-dmu.vercel.app/logo-preview.jpg"> -->
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="Certificate Verification | CR&PC, DMU">
+    <meta property="twitter:description" content="certificate verification portal for the Campus Recruitment & Placement Cell, Dhanamanjuri University.">
+
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="card">
+    <main class="card">
         <div id="search-section">
-            <h2>Certificate Verification</h2>
+            <h1>Certificate Verification</h1>
             <p class="subtitle">Enter a Certificate ID to verify its authenticity.</p>
             
             <form id="verify-form">
+                <!-- label for screen readers and SEO accessibility -->
+                <label for="cert-id-input" style="display: none;">Certificate ID</label>
                 <input type="text" id="cert-id-input" placeholder="e.g., CRC-20220709-B9M" required>
                 <button type="submit" class="btn">Verify</button>
             </form>
 
-            <div id="status-message" style="margin-top: 15px; font-size: 0.9rem; font-weight: 500;"></div>
+            <div id="status-message" style="margin-top: 15px; font-size: 0.9rem; font-weight: 500;" aria-live="polite"></div>
         </div>
 
-        <div id="resultContainer" style="display: none;"></div>
-    </div>
+        <div id="resultContainer" style="display: none;" aria-live="polite"></div>
+    </main>
+
+    <!-- Copyright Footer -->
+    <footer style="text-align: center; margin-top: 25px; font-size: 0.8rem; color: #666; padding: 0 15px;">
+        &copy; 2024 Campus Recruitment & Placement Cell, Dhanamanjuri University. All rights reserved.
+    </footer>
 
     <script src="script.js"></script>
 </body>
