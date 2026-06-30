@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy | CR&PC Verification</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .legal-wrapper { flex: 1; overflow-y: auto; background-color: var(--bg-main); padding: 3rem 1.5rem; }
+        .legal-container { max-width: 720px; margin: 0 auto; background: var(--bg-card); padding: 3rem; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.03); border: 1px solid var(--border-color); }
+        .legal-container h1 { color: var(--brand-navy); font-size: 2rem; margin-bottom: 0.5rem; }
+        .legal-container .last-updated { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 2rem; display: block; }
+        .legal-container h2 { color: var(--brand-navy); font-size: 1.25rem; margin: 2rem 0 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; }
+        .legal-container p, .legal-container li { color: var(--text-dark); line-height: 1.6; font-size: 0.95rem; margin-bottom: 1rem; }
+        .legal-container ul { margin-bottom: 1.5rem; padding-left: 1.5rem; }
+        .back-link { display: flex; align-items: center; gap: 8px; color: var(--brand-blue); text-decoration: none; font-weight: 600; font-size: 0.9rem; }
+        .back-link:hover { text-decoration: underline; }
+        @media (max-width: 600px) { .legal-container { padding: 1.5rem; } }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper" style="background: none;">
+        <header class="top-nav">
+            <div class="logo-area">
+                <div class="logo-placeholder">DMU</div>
+                <div class="brand-text">
+                    <strong>DHANAMANJURI</strong>
+                    <span>UNIVERSITY</span>
+                </div>
+            </div>
+            <a href="index.html" class="back-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                Back to Verification
+            </a>
+        </header>
+
+        <main class="legal-wrapper">
+            <div class="legal-container">
+                <h1>Privacy Policy</h1>
+                <span class="last-updated">Last Updated: June 2026</span>
+
+                <p>The Campus Recruitment & Placement Cell (CR&PC) respects your privacy. This policy outlines how we handle data within our Certificate Verification Portal.</p>
+
+                <h2>1. Zero-Knowledge Data Architecture</h2>
+                <p>To ensure maximum security and student privacy, this system utilizes a strict zero-knowledge archive architecture. The backend database <strong>does not expose or store plain-text certificate details</strong> to the public internet.</p>
+                <p>Instead, queried IDs are cryptographically hashed on the server using PBKDF2 with a secret salt to safely locate matches. This prevents any reverse-engineering of student data.</p>
+
+                <h2>2. Information Collection & Retention</h2>
+                <p>We believe in data minimization. When you use this portal to verify a certificate:</p>
+                <ul>
+                    <li><strong>No Query Logging:</strong> Queried certificate IDs are processed strictly in real-time memory to return validation results and are never saved, logged, or recorded permanently on the server.</li>
+                    <li><strong>No Tracking Cookies:</strong> We do not use third-party tracking cookies or analytics platforms to monitor your behavior.</li>
+                </ul>
+
+                <h2>3. Security & Anti-Abuse Measures</h2>
+                <p>To protect the system against enumeration attacks, we monitor client IP addresses. However, this is done with utmost respect for privacy:</p>
+                <ul>
+                    <li>Client IP addresses are buffered temporarily in highly volatile serverless runtime memory.</li>
+                    <li>This data is used solely to enforce our anti-abuse rate limits (a maximum of 10 requests per minute).</li>
+                    <li>The IP data is instantly and automatically discarded after the 1-minute rolling window expires.</li>
+                </ul>
+
+                <h2>4. Third-Party Sharing</h2>
+                <p>We do not sell, trade, or otherwise transfer any data to outside parties. The verification results are provided strictly to the user initiating the query.</p>
+
+                <h2>5. Contact Information</h2>
+                <p>If you have any questions regarding this privacy policy or require official verification assistance, please contact the University Placement Cell.</p>
+            </div>
+        </main>
+
+        <footer class="site-footer">
+            <div class="footer-left">
+                <div class="footer-logo">DMU</div>
+                <div class="footer-text">
+                    <strong>Dhanamanjuri University</strong>
+                    <span>Imphal, Manipur, India</span>
+                </div>
+            </div>
+            <div class="footer-center">&copy; 2026 Dhanamanjuri University. All rights reserved.</div>
+            <div class="footer-right">
+                <a href="privacy.html" style="color: white;">Privacy Policy</a>
+                <a href="terms.html">Terms of Use</a>
+            </div>
+        </footer>
+    </div>
+</body>
+</html>
