@@ -2,38 +2,48 @@ const crypto = require('crypto');
 const { GoogleSpreadsheet } = require('google-spreadsheet');
 const { JWT } = require('google-auth-library');
 
-// FIX: Initialize the KV client using your specific connection URL string
-const { createClient } = require('@vercel/kv');
-const kv = createClient({
-  url: process.env.KV_URL || process.env.KV_REST_API_URL
-});
+// FIX: Switch from @vercel/kv to standard redis package
+const { createClient } = require('redis');
+
+let redisClient = null;
+
+async function getRedisClient() {
+  if (!redisClient) {
+    // Falls back to any of the keys populated by your Vercel panel
+    const url = process.env.REDIS_URL || process.env.KV_REDIS_URL || process.env.KV_URL;
+    redisClient = createClient({ url });
+    redisClient.on('error', (err) => console.error('Redis Client Error', err));
+    await redisClient.connect();
+  }
+  return redisClient;
+}
 
 const SECRET_KEY = process.env.SECRET_SALT || process.env.SECRET_KEY;
 const CERT_ID_REGEX = /^CRC-\d{8}-[A-Z0-9]{3,5}$/;
-
-// 1. DISTRIBUTED KV RATE LIMITER
-const WINDOW_SECS = 60; // 1 minute window
-const MAX_REQUESTS = 10; // Max 10 attempts per minute per IP
+const WINDOW_SECS = 60; 
+const MAX_REQUESTS = 10; 
 
 async function isRateLimited(ip) {
   const key = `ratelimit:${ip}`;
   try {
-    const currentRequests = await kv.get(key) || 0;
-    if (currentRequests >= MAX_REQUESTS) return true;
+    const client = await getRedisClient();
+    const currentRequests = await client.get(key) || 0;
+    if (parseInt(currentRequests, 10) >= MAX_REQUESTS) return true;
     
-    const pipeline = kv.pipeline();
-    pipeline.incr(key);
-    if (currentRequests === 0) {
-      pipeline.expire(key, WINDOW_SECS);
+    const multi = client.multi();
+    multi.incr(key);
+    if (parseInt(currentRequests, 10) === 0) {
+      multi.expire(key, WINDOW_SECS);
     }
-    await pipeline.exec();
+    await multi.exec();
     return false;
   } catch (error) {
-    console.error('KV Rate Limit Error:', error);
-    return false; // Fail open so real users aren't blocked if KV blips
+    console.error('Redis Rate Limit Error:', error);
+    return false; // Fail open to keep site functional during database issues
   }
 }
 
+// Security headers and CORS sections stay exactly the same...
 function setSecurityHeaders(res) {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
@@ -51,18 +61,15 @@ function validateCORS(req, res) {
     'http://localhost:3000'
   ];
   let origin = req.headers.origin;
-
   if (!origin) {
     res.status(403).json({ success: false, message: 'Forbidden: Missing Origin.' });
     return false;
   }
-
   const normalizedOrigin = origin.replace(/\/$/, '').toLowerCase();
   if (!allowedOrigins.some(o => o.toLowerCase() === normalizedOrigin)) {
     res.status(403).json({ success: false, message: 'Forbidden: Untrusted Origin.' });
     return false;
   }
-
   res.setHeader('Access-Control-Allow-Origin', origin);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -84,7 +91,6 @@ function generateHash(certificateId) {
   return crypto.pbkdf2Sync(certificateId, SECRET_KEY, 100000, 32, 'sha256').toString('hex');
 }
 
-// 2. GOOGLE SHEETS AUTHENTICATION
 const serviceAccountAuth = new JWT({
   email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
   key: process.env.GOOGLE_PRIVATE_KEY ? process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n') : '',
@@ -118,21 +124,20 @@ module.exports = async function handler(req, res) {
 
   try {
     const candidateHash = generateHash(validation.cleanId);
+    const client = await getRedisClient();
 
-    // 3. FAST INDEXED LOOKUP (Vercel KV)
-    const cachedRecord = await kv.get(`cert:${candidateHash}`);
-    if (cachedRecord) {
-      return res.status(200).json({ success: true, data: cachedRecord });
+    // Fast indexed read lookup
+    const cachedData = await client.get(`cert:${candidateHash}`);
+    if (cachedData) {
+      return res.status(200).json({ success: true, data: JSON.parse(cachedData) });
     }
 
-    // 4. FALLBACK TO GOOGLE SHEETS & REBUILD INDEX
+    // Fallback to Google Sheets index rebuild
     const doc = new GoogleSpreadsheet(process.env.GOOGLE_SHEET_ID, serviceAccountAuth);
     await doc.loadInfo();
     const sheet = doc.sheetsByIndex[0];
     const rows = await sheet.getRows();
 
-    // Cache the entire sheet temporarily (1 hour) into KV to prevent future linear scans
-    const pipeline = kv.pipeline();
     let foundRecord = null;
 
     for (const row of rows) {
@@ -144,14 +149,12 @@ module.exports = async function handler(req, res) {
         status: row.get('Status')
       };
       
-      pipeline.set(`cert:${hash}`, studentData, { ex: 3600 }); // Cache for 1 hour
+      // Cache item as a stringified object for 1 hour
+      await client.set(`cert:${hash}`, JSON.stringify(studentData), { EX: 3600 });
       if (hash === candidateHash) foundRecord = studentData;
     }
-    
-    await pipeline.exec(); // Execute batch index update
 
     if (foundRecord) {
-      
       return res.status(200).json({ success: true, data: foundRecord });
     }
 
