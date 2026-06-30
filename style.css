@@ -232,8 +232,7 @@ input[type="text"]:focus { outline: none; border-color: var(--brand-navy); box-s
 .site-footer {
   background: var(--brand-navy); 
   color: white;
-  /* Increased the vertical padding here to make it taller */
-  padding: clamp(1.5rem, 3vh, 2rem) clamp(1.5rem, 5vw, 4rem);
+  padding: clamp(2rem, 3vh, 2.5rem) clamp(1.5rem, 5vw, 4rem);
   display: flex; 
   justify-content: space-between; 
   align-items: center;
