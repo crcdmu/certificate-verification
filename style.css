@@ -100,7 +100,16 @@ body {
 .hero-content { position: relative; z-index: 2; max-width: 480px; }
 .eyebrow { color: var(--brand-blue); font-weight: 600; font-size: clamp(0.75rem, 1.5vw, 0.85rem); margin-bottom: 0.75rem; display: inline-block; }
 .hero-side h1 { font-size: clamp(2.2rem, 4vw + 0.5rem, 3.2rem); font-weight: 800; line-height: 1.1; color: var(--brand-navy); margin-bottom: 0.75rem; letter-spacing: -0.02em; }
-.hero-subtitle { font-size: clamp(0.95rem, 2vw, 1.05rem); color: var(--text-muted); line-height: 1.5; margin-bottom: clamp(1.5rem, 4vh, 2rem); }
+.hero-subtitle { 
+    font-size: clamp(0.95rem, 2vw, 1.05rem); 
+    /* Changed from --text-muted to a slightly darker slate for better contrast */
+    color: #475569; 
+    line-height: 1.5; 
+    margin-bottom: clamp(1.5rem, 4vh, 2rem);
+    /* Adds a soft white glow behind the text */
+    text-shadow: 0 1px 4px rgba(255, 255, 255, 0.9), 0 0 12px rgba(255, 255, 255, 1);
+    font-weight: 500;
+}
 
 .feature-list { display: flex; flex-direction: column; gap: clamp(1rem, 2.5vh, 1.5rem); }
 .feature-item { display: flex; align-items: flex-start; gap: 1rem; }
@@ -109,9 +118,19 @@ body {
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
 .feature-text { display: flex; flex-direction: column; gap: 4px; }
-.feature-text strong { font-size: 0.95rem; color: var(--brand-navy); }
-.feature-text span { font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; }
+.feature-text strong { 
+    font-size: 0.95rem; 
+    color: var(--brand-navy); 
+    text-shadow: 0 1px 4px rgba(255, 255, 255, 0.9);
+}
 
+.feature-text span { 
+    font-size: 0.85rem; 
+    color: #475569; /* Darkened slightly */
+    line-height: 1.4; 
+    text-shadow: 0 1px 4px rgba(255, 255, 255, 0.9), 0 0 10px rgba(255, 255, 255, 1);
+    font-weight: 500;
+}
 /* Hidden to allow background image to look clean */
 .hero-background {
   display: none;
