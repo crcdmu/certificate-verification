@@ -1,4 +1,3 @@
-// --- NEW: FORCE PAGE TO TOP ON RELOAD ---
 // This disables the browser's memory of where you were scrolled,
 // ensuring the animation starts from the top every single time.
 if ('scrollRestoration' in history) {
