@@ -9,7 +9,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const scannedId = urlParams.get('id');
 
   if (scannedId) {
-    // If a QR code was scanned, fill the input and run the check automatically
     const inputField = document.getElementById('cert-id-input');
     if(inputField) inputField.value = scannedId;
     runVerification(scannedId);
@@ -61,26 +60,50 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// --- NEW: ROBUST MOBILE AUTO-SCROLL ---
-// Using 'load' ensures all CSS and layouts are fully painted before measuring
+// --- NEW: CUSTOM SPEED ANIMATION FUNCTION ---
+function smoothScrollTo(targetPosition, duration) {
+  const startPosition = window.scrollY;
+  const distance = targetPosition - startPosition;
+  let startTime = null;
+
+  function animation(currentTime) {
+    if (startTime === null) startTime = currentTime;
+    const timeElapsed = currentTime - startTime;
+    // Calculate progress between 0 and 1
+    const progress = Math.min(timeElapsed / duration, 1);
+    
+    // Easing function (Ease-in-out cubic) for a natural, gliding feel
+    const easeInOutCubic = progress < 0.5 
+        ? 4 * progress * progress * progress 
+        : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+
+    window.scrollTo(0, startPosition + (distance * easeInOutCubic));
+
+    if (timeElapsed < duration) {
+      requestAnimationFrame(animation);
+    }
+  }
+
+  requestAnimationFrame(animation);
+}
+
+// --- UPDATED: MOBILE AUTO-SCROLL WITH SPEED CONTROL ---
 window.addEventListener('load', () => {
   if (window.innerWidth <= 1024) {
     setTimeout(() => {
       const formCard = document.querySelector('.form-side');
       
       if (formCard) {
-        // Calculate the exact pixel position of the form, minus a 20px padding buffer for the top nav
         const yOffset = formCard.getBoundingClientRect().top + window.scrollY - 20;
         
-        window.scrollTo({
-          top: yOffset,
-          behavior: 'smooth'
-        });
+        // PARAMETER 1: Target Position (yOffset)
+        // PARAMETER 2: Duration in milliseconds (1500 = 1.5 seconds)
+        // Change '1500' to a higher number to make it even slower!
+        smoothScrollTo(yOffset, 1500);
       }
-    }, 800); // 800ms delay to let the user see the top branding first
+    }, 800); // Wait 800ms after load before starting the scroll
   }
 });
-
 
 function renderVerificationSuccess(studentData) {
   const resultContainer = document.getElementById('resultContainer');
