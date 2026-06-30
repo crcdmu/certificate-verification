@@ -301,7 +301,7 @@ input[type="text"]:focus { outline: none; border-color: var(--brand-navy); box-s
 @media (max-height: 650px) and (min-width: 1025px) {
   .top-nav, .site-footer { padding-top: 0.5rem; padding-bottom: 0.5rem; }
   .ui-card { padding: 1.25rem; }
-  .doc-icon { display: none; } /* Completely hides the top icon to save maximum vertical space */
+  /*.doc-icon { display: none; } /* Completely hides the top icon to save maximum vertical space */
   .divider { margin: 0.75rem 0; }
   .hero-side h1 { font-size: 2rem; }
 }
