@@ -167,10 +167,9 @@ function resetSearch() {
   window.location.href = window.location.pathname;
 }
 
-// ──────────────────────────────────────────────
 // Mailto fallback: always opens Gmail compose
 // while also trying the default email client
-// ──────────────────────────────────────────────
+
 document.querySelectorAll('a.mailto-fallback').forEach(link => {
   link.addEventListener('click', function(e) {
     e.preventDefault();
