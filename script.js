@@ -96,7 +96,7 @@ function smoothScrollTo(targetPosition, duration) {
   requestAnimationFrame(animation);
 }
 
-// Mobile Auto-Scroll
+// Mobile Auto-Scroll (Landing Page Only)
 window.addEventListener('load', () => {
   const urlParams = new URLSearchParams(window.location.search);
   
@@ -166,3 +166,29 @@ function renderRecordNotFound(displayId, customMessage) {
 function resetSearch() {
   window.location.href = window.location.pathname;
 }
+
+// ──────────────────────────────────────────────
+// Mailto fallback: always opens Gmail compose
+// while also trying the default email client
+// ──────────────────────────────────────────────
+document.querySelectorAll('a.mailto-fallback').forEach(link => {
+  link.addEventListener('click', function(e) {
+    e.preventDefault();
+    const href = this.getAttribute('href');
+    if (!href || !href.startsWith('mailto:')) return;
+
+    const mailto = href.substring(7); // remove 'mailto:'
+    const [emailPart, queryPart] = mailto.split('?');
+    const email = emailPart;
+    let subject = '';
+
+    if (queryPart) {
+      const params = new URLSearchParams(queryPart);
+      subject = params.get('subject') || 'Contact from Verification Portal';
+    }
+
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}&su=${encodeURIComponent(subject)}`;
+    window.open(gmailUrl, '_blank');               // always opens Gmail
+    window.location.href = href;                    // also triggers default mail app
+  });
+});
