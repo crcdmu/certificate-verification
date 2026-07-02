@@ -97,7 +97,7 @@ QR Scan appends the ID directly to the URL:e.g. `https://verification-dmu.vercel
 ---
 
 ## Project Structure
-
+```text
 .
 ├── api/
 │   └── verify.js          # Serverless function (POST /api/verify)
@@ -111,6 +111,7 @@ QR Scan appends the ID directly to the URL:e.g. `https://verification-dmu.vercel
 ├── logo.png               # CR&PC logo (you must provide this file)
 └── README.md              # This file
 
+```
 ----
 
 
