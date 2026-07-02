@@ -1,10 +1,8 @@
-// This disables the browser's memory of where you were scrolled,
-// ensuring the animation starts from the top every single time.
+// Disable browser scroll restoration
 if ('scrollRestoration' in history) {
   history.scrollRestoration = 'manual';
 }
-window.scrollTo(0, 0); 
-
+window.scrollTo(0, 0);
 
 document.addEventListener('DOMContentLoaded', () => {
   const verifyForm = document.getElementById('verify-form');
@@ -12,7 +10,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const resultContainer = document.getElementById('resultContainer');
   const statusDisplay = document.getElementById('status-message');
 
-  // --- URL Parameter Check for QR Codes ---
+  // Wire up the static "Verify Another ID" button (CSP-safe, no inline onclick)
+  const verifyAnotherBtn = document.getElementById('verify-another-btn');
+  if (verifyAnotherBtn) {
+    verifyAnotherBtn.addEventListener('click', resetSearch);
+  }
+
+  // URL Parameter Check for QR Codes
   const urlParams = new URLSearchParams(window.location.search);
   const scannedId = urlParams.get('id');
 
@@ -22,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     runVerification(scannedId);
   }
 
-  // --- Manual Form Submission ---
+  // Manual Form Submission
   if (verifyForm) {
     verifyForm.addEventListener('submit', (event) => {
       event.preventDefault(); 
@@ -34,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // --- Reusable Verification Logic ---
+  // Reusable Verification Logic
   async function runVerification(candidateId) {
     statusDisplay.style.color = '#111827';
     statusDisplay.innerText = 'Querying University Secure Records...';
@@ -53,10 +57,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const result = await response.json();
 
       if (result.success && result.data) {
-        // Success: Switch to the fullscreen verified view
         renderVerificationSuccess(result.data);
       } else {
-        // Error: Stay on landing view, but swap the card content to show the error
         document.getElementById('search-section').style.display = 'none';
         document.getElementById('resultContainer').style.display = 'block';
         renderRecordNotFound(candidateId, result.message);
@@ -69,8 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-
-// --- CUSTOM SPEED ANIMATION FUNCTION ---
+// Smooth Scroll Animation
 function smoothScrollTo(targetPosition, duration) {
   const startPosition = window.scrollY;
   const distance = targetPosition - startPosition;
@@ -81,7 +82,6 @@ function smoothScrollTo(targetPosition, duration) {
     const timeElapsed = currentTime - startTime;
     const progress = Math.min(timeElapsed / duration, 1);
     
-    // Easing function (Ease-in-out cubic) for a natural, gliding feel
     const easeInOutCubic = progress < 0.5 
         ? 4 * progress * progress * progress 
         : 1 - Math.pow(-2 * progress + 2, 3) / 2;
@@ -96,42 +96,34 @@ function smoothScrollTo(targetPosition, duration) {
   requestAnimationFrame(animation);
 }
 
-
-// --- MOBILE AUTO-SCROLL (LANDING PAGE ONLY) ---
+// Mobile Auto-Scroll
 window.addEventListener('load', () => {
   const urlParams = new URLSearchParams(window.location.search);
   
-  // Only trigger the landing page scroll if we are NOT loading a QR code
   if (!urlParams.get('id') && window.innerWidth <= 1024) {
     setTimeout(() => {
       const formCard = document.querySelector('.form-side');
       
-      // Ensure the form side is actually visible before trying to scroll to it
       if (formCard && formCard.style.display !== 'none') {
         const yOffset = formCard.getBoundingClientRect().top + window.scrollY - 20;
-        smoothScrollTo(yOffset, 1500); // 1.5 seconds smooth scroll
+        smoothScrollTo(yOffset, 1500);
       }
     }, 800); 
   }
 });
 
-
-
 function renderVerificationSuccess(studentData) {
-  // Hide Landing View, Show Verified View
   document.getElementById('landing-view').style.display = 'none';
   const verifiedView = document.getElementById('verified-view');
   verifiedView.style.display = 'flex'; 
   
   verifiedView.setAttribute('data-verification-timestamp', new Date().toISOString());
 
-  // Populate the new data card
   document.getElementById('vd-name').textContent = studentData.name;
   document.getElementById('vd-prog').textContent = studentData.programme;
   document.getElementById('vd-date').textContent = studentData.issuedOn;
   document.getElementById('vd-status').textContent = studentData.status;
 
-  // --- MOBILE AUTO-SCROLL (VERIFIED VIEW) ---
   if (window.innerWidth <= 1024) {
     setTimeout(() => {
       const detailsPanel = document.querySelector('.details-panel');
@@ -150,7 +142,7 @@ function renderRecordNotFound(displayId, customMessage) {
   resultContainer.innerHTML = `
     <div class="invalid-badge">✕ RECORD NOT FOUND</div>
     <p id="error-msg-container" style="color: var(--text-muted); margin-bottom: 20px; text-align: center; font-size: 0.95rem;"></p>
-    <button onclick="resetSearch()" class="btn-primary" style="background: #f1f5f9; color: var(--brand-navy);">Back to Search</button>
+    <button id="back-to-search-btn" class="btn-primary" style="background: #f1f5f9; color: var(--brand-navy);">Back to Search</button>
   `;
   
   const msgContainer = document.getElementById('error-msg-container');
@@ -166,38 +158,11 @@ function renderRecordNotFound(displayId, customMessage) {
     msgContainer.appendChild(strongTag);
     msgContainer.appendChild(document.createTextNode(" exists in the repository."));
   }
+
+  // Attach listener to the dynamically created button (CSP-safe)
+  document.getElementById('back-to-search-btn').addEventListener('click', resetSearch);
 }
 
-
-window.resetSearch = function() {
-  // Refreshes the page and drops any '?id=' parameters from the URL
-  // This acts as a hard reset, so resetting input values manually afterward is unnecessary.
+function resetSearch() {
   window.location.href = window.location.pathname;
-};
-
-
-// Help link: mailto with Gmail fallback
-
-document.getElementById('help-link').addEventListener('click', function(e) {
-  e.preventDefault();
-  
-  var email = 'crcdmu.manipur@gmail.com';
-  var subject = 'Certificate Verification Help';
-  var mailtoUrl = 'mailto:' + email + '?subject=' + encodeURIComponent(subject);
-  
-  // Create a hidden iframe to attempt mailto
-  var iframe = document.createElement('iframe');
-  iframe.style.display = 'none';
-  iframe.src = mailtoUrl;
-  document.body.appendChild(iframe);
-  
-  // After a short delay, check if mailto worked
-  // If still on the page, open Gmail
-  setTimeout(function() {
-    document.body.removeChild(iframe);
-    // We're still here, so mailto likely didn't trigger
-    // Open Gmail in a new tab
-    var gmailUrl = 'https://mail.google.com/mail/?view=cm&fs=1&to=' + email + '&su=' + encodeURIComponent(subject);
-    window.open(gmailUrl, '_blank');
-  }, 800);
-});
+}

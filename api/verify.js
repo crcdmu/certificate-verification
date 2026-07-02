@@ -1,9 +1,9 @@
 const crypto = require('crypto');
 const { createClient } = require('@libsql/client');
 
-// ──────────────────────────────────
+
 // Environment & Constants
-// ──────────────────────────────────
+
 const SECRET_KEY = process.env.SECRET_SALT || process.env.SECRET_KEY;
 const CERT_ID_REGEX = /^CRC-\d{8}-[A-Z0-9]{3,5}$/;
 const WINDOW_SECS = 60;
@@ -17,9 +17,9 @@ const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'https://verification-dm
   .split(',')
   .map(o => o.trim().replace(/\/$/, '').toLowerCase());
 
-// ──────────────────────────────────
+
 // Turso client (lazy init)
-// ──────────────────────────────────
+
 let tursoClient = null;
 function getTursoClient() {
   if (!tursoClient) {
@@ -34,11 +34,12 @@ function getTursoClient() {
   return tursoClient;
 }
 
-// ──────────────────────────────────
+
 // Upstash Redis Helper (REST API)
-// ──────────────────────────────────
+
 async function redisCommand(command, ...args) {
-  const url = `${UPSTASH_URL}/${command}/${args.join('/')}`;
+  const encodedArgs = args.map(arg => encodeURIComponent(arg)).join('/');
+  const url = `${UPSTASH_URL}/${command}/${encodedArgs}`;
   const response = await fetch(url, {
     headers: { Authorization: `Bearer ${UPSTASH_TOKEN}` },
   });
@@ -46,21 +47,23 @@ async function redisCommand(command, ...args) {
   return data.result;
 }
 
-// ──────────────────────────────────
-// Rate Limiter
-// ──────────────────────────────────
+
+// Rate Limiter (atomic, defensive)
+
 async function isRateLimited(ip) {
   const key = `ratelimit:${ip}`;
   try {
-    const current = await redisCommand('get', key);
-    const count = current ? parseInt(current, 10) : 0;
-    if (count >= MAX_REQUESTS) return true;
-
-    if (count === 0) {
-      await redisCommand('set', key, 1, 'EX', WINDOW_SECS);
-    } else {
-      await redisCommand('incr', key);
+    const count = await redisCommand('incr', key);
+    if (count === 1) {
+      try {
+        await redisCommand('expire', key, WINDOW_SECS);
+      } catch {
+        // If expire fails, delete the orphaned key to prevent permanently rate-limiting this IP
+        await redisCommand('del', key);
+        return false;
+      }
     }
+    if (count > MAX_REQUESTS) return true;
     return false;
   } catch (err) {
     console.error('Rate limiter error:', err);
@@ -68,9 +71,9 @@ async function isRateLimited(ip) {
   }
 }
 
-// ──────────────────────────────────
-// Cache Helpers
-// ──────────────────────────────────
+
+// Cache Helpers (URL-encoded safe)
+
 async function getCache(key) {
   try {
     const result = await redisCommand('get', key);
@@ -88,22 +91,13 @@ async function setCache(key, value, ttl) {
   }
 }
 
-// ──────────────────────────────────
-// Security Headers
-// ──────────────────────────────────
-function setSecurityHeaders(res) {
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-  res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader(
-    'Content-Security-Policy',
-    "default-src 'self'; style-src 'self' 'unsafe-inline'; form-action 'self'; frame-ancestors 'none';"
-  );
-}
 
-// ──────────────────────────────────
 // CORS Validation
-// ──────────────────────────────────
+// NOTE: This validates the Origin header to prevent cross-site requests from browsers. 
+// It is NOT a security boundary against non-browser clients (curl, scripts) 
+// — the Origin header is trivially forgeable. Actual abuse protection relies on the
+// IP-based rate limiter (isRateLimited) which is the real gate.
+
 function validateCORS(req, res) {
   const origin = req.headers.origin;
   if (!origin) {
@@ -121,9 +115,9 @@ function validateCORS(req, res) {
   return true;
 }
 
-// ──────────────────────────────────
+
 // Input Validation
-// ──────────────────────────────────
+
 function validateCertificateId(certificateId) {
   if (!certificateId || typeof certificateId !== 'string') {
     return { valid: false, message: 'Please provide a valid Certificate ID.' };
@@ -135,19 +129,22 @@ function validateCertificateId(certificateId) {
   return { valid: true, cleanId };
 }
 
-// ──────────────────────────────────
-// Hash Generation
-// ──────────────────────────────────
-function generateHash(certificateId) {
-  return crypto.pbkdf2Sync(certificateId, SECRET_KEY, 100000, 32, 'sha256').toString('hex');
+
+// Hash Generation (async, non-blocking)
+
+async function generateHash(certificateId) {
+  return new Promise((resolve, reject) => {
+    crypto.pbkdf2(certificateId, SECRET_KEY, 100000, 32, 'sha256', (err, derivedKey) => {
+      if (err) return reject(err);
+      resolve(derivedKey.toString('hex'));
+    });
+  });
 }
 
-// ──────────────────────────────────
-// Main Handler
-// ──────────────────────────────────
-module.exports = async function handler(req, res) {
-  setSecurityHeaders(res);
 
+// Main Handler
+
+module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, message: 'Method Not Allowed.' });
@@ -181,7 +178,7 @@ module.exports = async function handler(req, res) {
 
   let candidateHash;
   try {
-    candidateHash = generateHash(validation.cleanId);
+    candidateHash = await generateHash(validation.cleanId);
   } catch (err) {
     console.error('Hash generation error:', err);
     return res.status(500).json({ success: false, message: 'Verification error.' });
