@@ -1,29 +1,24 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 :root {
-  /* Brand Colors */
   --brand-navy: #0a192f;
   --brand-blue: #1d4ed8;
   --bg-main: #f8fafc;
   --bg-card: #ffffff;
-  
   --text-dark: #0f172a;
   --text-muted: #64748b;
   --border-color: #e2e8f0;
-  
   --success-green: #059669;
   --success-bg: #ecfdf5;
   --error-red: #dc2626;
 }
-
-/* 1. MASTER RESET & BASE STYLES */
 
 html, body {
   margin: 0;
   padding: 0;
   width: 100%;
   height: 100%;
-  overflow: hidden; /* Default lock for desktop */
+  overflow: hidden;
 }
 
 *, *::before, *::after {
@@ -42,19 +37,16 @@ body {
   flex-direction: column;
   height: 100vh;
   width: 100vw;
-  /* Fixed background anchoring so it scales better across screens */
   background: #f8fafc url('background.png') no-repeat center bottom;
   background-size: cover;
   background-attachment: fixed;
 }
-/* 2. HEADER                                                 */
 
 .top-nav {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: clamp(1rem, 2vh, 1.5rem) clamp(1.5rem, 5vw, 4rem);
-  /* Make the navbar completely transparent and remove the bottom border */
   background: transparent;
   border-bottom: none;
   flex-shrink: 0;
@@ -62,11 +54,15 @@ body {
 }
 
 .logo-area { display: flex; align-items: center; gap: 12px; }
-.logo-placeholder {
-  width: clamp(36px, 4vw, 44px); height: clamp(44px, 5vw, 52px);
-  background: var(--brand-navy); color: white;
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 700; border-radius: 4px;
+
+.logo-area .logo-placeholder { display: none; }
+
+.header-logo {
+  width: clamp(40px, 5vw, 52px);
+  height: clamp(40px, 5vw, 52px);
+  object-fit: contain;
+  border-radius: 6px;
+  flex-shrink: 0;
 }
 
 .brand-text { display: flex; flex-direction: column; line-height: 1.2; }
@@ -80,8 +76,6 @@ body {
 .badge-text strong { font-size: 0.85rem; color: var(--text-dark); }
 .badge-text span { font-size: 0.7rem; color: var(--text-muted); }
 
-/* LANDING PAGE (VIEW 1) */
-
 .split-container {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -89,7 +83,6 @@ body {
   overflow: hidden;
 }
 
-/* Left Side: Hero */
 .hero-side {
   padding: clamp(1.5rem, 4vh, 3rem) clamp(1.5rem, 5vw, 4rem);
   display: flex; flex-direction: column; justify-content: center;
@@ -98,16 +91,13 @@ body {
 }
 
 .hero-content { 
-    position: relative; 
-    z-index: 2; 
-    max-width: 480px;     
-    /* Frosted glass effect */
-    background: rgba(255, 255, 255, 0.2); 
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    padding: 2rem;
-    border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.3); 
+  position: relative; z-index: 2; max-width: 480px;
+  background: rgba(255, 255, 255, 0.2); 
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 2rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.3); 
 }
 .eyebrow { color: var(--brand-blue); font-weight: 600; font-size: clamp(0.75rem, 1.5vw, 0.85rem); margin-bottom: 0.75rem; display: inline-block; }
 .hero-side h1 { font-size: clamp(2.2rem, 4vw + 0.5rem, 3.2rem); font-weight: 800; line-height: 1.1; color: var(--brand-navy); margin-bottom: 0.75rem; letter-spacing: -0.02em; }
@@ -123,12 +113,8 @@ body {
 .feature-text strong { font-size: 0.95rem; color: var(--brand-navy); }
 .feature-text span { font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; }
 
-/* Hidden to allow background image to look clean */
-.hero-background {
-  display: none;
-}
+.hero-background { display: none; }
 
-/* Right Side: Form Card */
 .form-side {
   padding: clamp(1.5rem, 4vh, 2rem) clamp(1.5rem, 5vw, 2rem);
   display: flex; align-items: center; justify-content: center; height: 100%;
@@ -171,7 +157,6 @@ input[type="text"]:focus { outline: none; border-color: var(--brand-navy); box-s
 }
 .btn-primary:hover { background: #0f274a; }
 
-/* Trust Badge styles (replaces .divider styles) */
 .trust-badge {
   display: flex;
   flex-direction: column;
@@ -185,33 +170,34 @@ input[type="text"]:focus { outline: none; border-color: var(--brand-navy); box-s
   color: var(--brand-blue);
   margin-bottom: 2px;
 }
-.trust-badge strong {
-  font-size: 0.9rem;
-  color: var(--text-dark);
-}
 .trust-badge span {
   font-size: 0.8rem;
   color: var(--text-muted);
 }
 
-.help-box {
-  background: #f0f7ff; border-radius: 8px; padding: 1rem;
-  display: flex; align-items: flex-start; gap: 12px;
+a.help-box {
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: #f0f7ff;
+  border-radius: 8px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
 }
-.help-box strong { display: block; font-size: 0.85rem; color: var(--brand-navy); margin-bottom: 4px; }
-.help-box p { font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; }
+a.help-box:hover { background: #e0efff; }
+a.help-box strong { display: block; font-size: 0.85rem; color: var(--brand-navy); margin-bottom: 4px; }
+a.help-box p { font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; }
 
 #status-message { text-align: center; margin-top: 1rem; }
 .invalid-badge { color: var(--error-red); font-weight: 700; font-size: 1rem; text-align: center; margin-bottom: 1rem; }
-
-
-/* VERIFIED SCREEN (VIEW 2)     */
 
 .verified-fullscreen-view {
     display: flex;
     flex-direction: row;
     flex: 1;
-    /* Added a slight semi-transparent white overlay so the text doesn't clash with the building */
     background-color: rgba(248, 250, 252, 0.75);
     backdrop-filter: blur(2px);
     overflow-y: auto; 
@@ -222,21 +208,19 @@ input[type="text"]:focus { outline: none; border-color: var(--brand-navy); box-s
     flex: 1;
     display: flex;
     flex-direction: column;
-    justify-content: center; /* Vertical centering */
-    align-items: center; /* Horizontal centering */
+    justify-content: center;
+    align-items: center;
     padding: 2rem;
     z-index: 2;
 }
 
-/* Final safeguard for short screens */
 @media (max-height: 700px) {
     .status-panel, .details-panel {
-        justify-content: flex-start; /* Switch to start on very small screens */
+        justify-content: flex-start;
         padding-top: 1rem;
     }
 }
 
-/* Status Panel Elements */
 .pulse-ring-outer { background-color: #f0fdf4; padding: 1.5rem; border-radius: 50%; }
 .pulse-ring-inner { background-color: #dcfce7; padding: 1.25rem; border-radius: 50%; }
 .check-circle {
@@ -252,7 +236,7 @@ input[type="text"]:focus { outline: none; border-color: var(--brand-navy); box-s
     line-height: 1.5; 
     margin-bottom: 2rem; 
     max-width: 400px;
-    text-align: center; /* Centers the text perfectly */
+    text-align: center;
 }
 
 .database-badge {
@@ -261,16 +245,15 @@ input[type="text"]:focus { outline: none; border-color: var(--brand-navy); box-s
     padding: 0.85rem 1.5rem; border-radius: 8px; color: var(--success-green); font-size: 0.9rem;
 }
 
-/* Details Panel & Card Elements */
 .data-card {
     background-color: var(--bg-card);
     border-radius: 16px;
-    padding: 1.5rem 2rem; /* Tightened padding to fit strictly in 16:9 laptops */
+    padding: 1.5rem 2rem;
     width: 100%;
     max-width: 480px;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0,0,0,0.05);
     border: 1px solid rgba(0,0,0,0.04);
-    height: max-content; /* Card only takes as much height as needed */
+    height: max-content;
     margin: 0 auto;
 }
 
@@ -285,7 +268,7 @@ input[type="text"]:focus { outline: none; border-color: var(--brand-navy); box-s
 
 .data-item {
     display: flex; align-items: center; gap: 1.25rem;
-    padding: 0.75rem 0; /* Tightened vertical spacing */
+    padding: 0.75rem 0;
     border-bottom: 1px solid var(--border-color);
 }
 
@@ -293,7 +276,7 @@ input[type="text"]:focus { outline: none; border-color: var(--brand-navy); box-s
 
 .data-item .icon-box {
     background-color: #f8fafc;
-    width: 42px; height: 42px; /* Slightly smaller */
+    width: 42px; height: 42px;
     border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
@@ -312,9 +295,6 @@ input[type="text"]:focus { outline: none; border-color: var(--brand-navy); box-s
 }
 .verify-another-btn:hover { background-color: #e2e8f0; }
 
-
-/* FOOTER                                                 */
-
 .site-footer {
   background: var(--brand-navy); color: white;
   padding: clamp(1.5rem, 3vh, 2.5rem) clamp(1.5rem, 5vw, 4rem);
@@ -323,11 +303,17 @@ input[type="text"]:focus { outline: none; border-color: var(--brand-navy); box-s
 }
 
 .footer-left { display: flex; align-items: center; gap: 12px; }
-.footer-logo {
-  width: 28px; height: 28px; background: white; color: var(--brand-navy);
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 700; font-size: 0.65rem; border-radius: 4px;
+
+.footer-logo { display: none; }
+
+.footer-logo-img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  border-radius: 4px;
+  flex-shrink: 0;
 }
+
 .footer-text { display: flex; flex-direction: column; }
 .footer-text strong { font-weight: 600; }
 .footer-text span { color: #94a3b8; font-size: 0.75rem; }
@@ -336,7 +322,6 @@ input[type="text"]:focus { outline: none; border-color: var(--brand-navy); box-s
 .footer-right a { color: #94a3b8; text-decoration: none; transition: color 0.2s; }
 .footer-right a:hover { color: white; }
 
-/*Screen reader*/
 .sr-only {
   position: absolute;
   width: 1px;
@@ -348,9 +333,8 @@ input[type="text"]:focus { outline: none; border-color: var(--brand-navy); box-s
   white-space: nowrap;
   border-width: 0;
 }
-/* RESPONSIVE BREAKPOINTS                                 */
 
-/* Short laptop screens (Landing Page Adjustments) */
+/* Responsive */
 @media (max-height: 800px) and (min-width: 1025px) {
   html, body { overflow: hidden; }
   .top-nav, .site-footer { padding-top: 0.75rem; padding-bottom: 0.75rem; }
@@ -368,7 +352,6 @@ input[type="text"]:focus { outline: none; border-color: var(--brand-navy); box-s
   .hero-subtitle { margin-bottom: 1.5rem; font-size: 0.95rem; }
 }
 
-/* Tablets and below (Stacking layout for both views) */
 @media (max-width: 1024px) {
   html, body { overflow-y: auto; height: auto; } 
   .page-wrapper { height: auto; min-height: 100vh; }
@@ -386,12 +369,11 @@ input[type="text"]:focus { outline: none; border-color: var(--brand-navy); box-s
   .site-footer { flex-direction: column; gap: 1.5rem; text-align: center; }
   .footer-left { justify-content: center; }
   .hero-content {
-      margin-left: 0; /* Resets the alignment for mobile */
-      padding: 1.5rem; /* Slightly smaller padding for smaller screens */
+      margin-left: 0;
+      padding: 1.5rem;
   }
 }
 
-/* Mobile Phones */
 @media (max-width: 600px) {
   .top-nav { flex-wrap: wrap; gap: 1rem; justify-content: center; }
   .header-badge { display: none; } 
@@ -400,15 +382,10 @@ input[type="text"]:focus { outline: none; border-color: var(--brand-navy); box-s
   .footer-right { flex-direction: row; gap: 0.85rem; justify-content: center; font-size: 0.75rem; }
 }
 
-/* 7. AGGRESSIVE HEIGHT COMPRESSION FOR LAPTOPS              */
-
 @media (max-height: 850px) {
-  /* Reduce outer panel padding */
   .status-panel, .details-panel { 
     padding: 1rem; 
   }
-  
-  /* Shrink the Status Side */
   .pulse-ring-outer { padding: 0.75rem; }
   .pulse-ring-inner { padding: 0.75rem; }
   .check-circle { width: 56px; height: 56px; }
@@ -418,16 +395,13 @@ input[type="text"]:focus { outline: none; border-color: var(--brand-navy); box-s
   .status-description { font-size: 0.95rem; margin-bottom: 1rem; }
   .database-badge { padding: 0.65rem 1rem; font-size: 0.8rem; }
   
-  /* Shrink the Data Card Side */
   .data-card { 
     padding: 1.25rem 1.5rem; 
   }
-  
   .data-card-header { margin-bottom: 0.75rem; }
   .data-item { padding: 0.6rem 0; gap: 1rem; }
   .authority-item { padding-bottom: 1rem; }
   
-  /* Shrink List Icons & Typography */
   .data-item .icon-box { width: 36px; height: 36px; }
   .data-item .icon-box svg { width: 16px; height: 16px; }
   
@@ -435,67 +409,8 @@ input[type="text"]:focus { outline: none; border-color: var(--brand-navy); box-s
   .data-value { font-size: 1rem; }
   .authority-text { font-size: 0.9rem; }
   
-  /* Shrink the Action Button */
   .verify-another-btn { 
     padding: 10px; 
     font-size: 0.9rem; 
   }
-}
-
-
-/* HEADER LOGO                         */
-
-
-/* Remove old placeholder */
-.logo-area .logo-placeholder {
-  display: none;
-}
-
-/* New logo image */
-.header-logo {
-  width: clamp(40px, 5vw, 52px);
-  height: clamp(40px, 5vw, 52px);
-  object-fit: contain;
-  border-radius: 6px;
-  flex-shrink: 0;
-}
-
-
-/* FOOTER LOGO                         */
-
-
-/* Remove old placeholder */
-.footer-logo {
-  display: none;
-}
-
-/* New footer logo image */
-.footer-logo-img {
-  width: 32px;
-  height: 32px;
-  object-fit: contain;
-  border-radius: 4px;
-  flex-shrink: 0;
-}
-
-/* Make footer-left align properly with image */
-.footer-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-/* Make help box clickable */
-a.help-box {
-  text-decoration: none;
-  color: inherit;
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-a.help-box:hover {
-  background: #e0efff;
 }
