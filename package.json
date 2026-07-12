@@ -3,6 +3,6 @@
   "version": "2.1.0",
   "private": true,
   "dependencies": {
-    "@libsql/client": "^0.5.0"
+    "@supabase/supabase-js": "^2.39.0"
   }
 }
