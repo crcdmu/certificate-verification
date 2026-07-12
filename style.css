@@ -159,7 +159,7 @@ input[type="text"]:focus { outline: none; border-color: var(--brand-navy); box-s
 
 .trust-badge {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
   text-align: center;
