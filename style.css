@@ -70,11 +70,40 @@ body {
 .brand-text span { font-size: clamp(0.8rem, 1.5vw, 0.95rem); color: var(--brand-navy); letter-spacing: 0.05em; }
 .brand-text small { font-size: clamp(0.6rem, 1vw, 0.7rem); color: var(--brand-blue); margin-top: 2px; }
 
-.header-badge { display: flex; align-items: center; gap: 10px; }
-.header-badge svg { color: var(--brand-navy); width: 20px; height: 20px; }
-.badge-text { display: flex; flex-direction: column; text-align: right; }
-.badge-text strong { font-size: 0.85rem; color: var(--text-dark); }
-.badge-text span { font-size: 0.7rem; color: var(--text-muted); }
+.header-badge { 
+    display: flex; 
+    align-items: center; 
+    gap: 12px;
+}
+
+.header-badge svg { 
+    color: var(--brand-navy); 
+    width: 24px; 
+    height: 24px; 
+    flex-shrink: 0;
+}
+
+.badge-text {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.badge-text strong {
+    color: var(--brand-navy);
+    font-size: 16px; 
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 2px;
+}
+
+.badge-text span {
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.2;
+    letter-spacing: 0.2px;
+}
 
 .split-container {
   display: grid;
