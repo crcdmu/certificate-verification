@@ -167,8 +167,7 @@ function resetSearch() {
   window.location.href = window.location.pathname;
 }
 
-// Mailto fallback: always opens Gmail compose
-// while also trying the default email client
+// Mailto logic: opens default mail app on mobile, Gmail in a new tab on desktop
 
 document.querySelectorAll('a.mailto-fallback').forEach(link => {
   link.addEventListener('click', function(e) {
@@ -176,7 +175,7 @@ document.querySelectorAll('a.mailto-fallback').forEach(link => {
     const href = this.getAttribute('href');
     if (!href || !href.startsWith('mailto:')) return;
 
-    const mailto = href.substring(7); // remove 'mailto:'
+    const mailto = href.substring(7);
     const [emailPart, queryPart] = mailto.split('?');
     const email = emailPart;
     let subject = '';
@@ -186,8 +185,13 @@ document.querySelectorAll('a.mailto-fallback').forEach(link => {
       subject = params.get('subject') || 'Contact from Verification Portal';
     }
 
-    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}&su=${encodeURIComponent(subject)}`;
-    window.open(gmailUrl, '_blank');               // always opens Gmail
-    window.location.href = href;                    // also triggers default mail app
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    if (isMobile) {
+      window.location.href = href;
+    } else {
+      const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}&su=${encodeURIComponent(subject)}`;
+      window.open(gmailUrl, '_blank');
+    }
   });
 });
