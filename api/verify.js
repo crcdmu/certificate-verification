@@ -74,16 +74,22 @@ module.exports = async function handler(req, res) {
   const clientIp = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || 'unknown';
   
   // Rate Limiting (Using Supabase RPC Function)
-  const { data: limitData, error: limitError } = await supabase.rpc('increment_rate_limit', { 
+ const { data: limitData, error: limitError } = await supabase.rpc('increment_rate_limit', { 
     client_ip: clientIp, 
     max_reqs: MAX_REQUESTS, 
     window_seconds: WINDOW_SECS 
   });
 
-  if (limitError || !limitData.allowed) {
-    return res.status(429).json({ success: false, message: 'Too many requests. Please try again later.' });
+  // 1. Handle Database/RPC errors
+  if (limitError) {
+    console.error('Supabase RPC Error:', limitError);
+    return res.status(500).json({ success: false, message: 'Internal Server Error during verification.' });
   }
 
+  // 2. Handle the Rate Limit response
+  if (!limitData || !limitData.allowed) {
+    return res.status(429).json({ success: false, message: 'Too many requests. Please try again later.' });
+  }
   let body;
   try {
     if (!req.body || typeof req.body !== 'object') throw new Error();
