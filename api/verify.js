@@ -74,7 +74,6 @@ module.exports = async function handler(req, res) {
   const clientIp = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || 'unknown';
   
   // Rate Limiting (Using Supabase RPC Function)
-  // Ensure you create the 'increment_rate_limit' function in Supabase as per instructions
   const { data: limitData, error: limitError } = await supabase.rpc('increment_rate_limit', { 
     client_ip: clientIp, 
     max_reqs: MAX_REQUESTS, 
