@@ -1,9 +1,17 @@
+const crypto = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_ANON_KEY
 );
+
+// Timing-safe token comparison to prevent side-channel attacks
+function verifyToken(header, secret) {
+  const expected = `Bearer ${secret}`;
+  if (!header || header.length !== expected.length) return false;
+  return crypto.timingSafeEqual(Buffer.from(header), Buffer.from(expected));
+}
 
 module.exports = async function handler(req, res) {
   // Only allow GET (Vercel Cron uses GET)
@@ -12,8 +20,7 @@ module.exports = async function handler(req, res) {
   }
 
   // Verify the request is from Vercel Cron (not a random visitor)
-  const authHeader = req.headers['authorization'];
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!verifyToken(req.headers['authorization'], process.env.CRON_SECRET)) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
