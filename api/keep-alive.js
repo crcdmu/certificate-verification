@@ -8,8 +8,9 @@ const supabase = createClient(
 
 // Timing-safe token comparison to prevent side-channel attacks
 function verifyToken(header, secret) {
+  if (!secret || !header) return false;
   const expected = `Bearer ${secret}`;
-  if (!header || header.length !== expected.length) return false;
+  if (header.length !== expected.length) return false;
   return crypto.timingSafeEqual(Buffer.from(header), Buffer.from(expected));
 }
 

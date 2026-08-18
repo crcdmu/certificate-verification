@@ -1,7 +1,8 @@
 # Certificate Verification Portal – CR&PC, Dhanamanjuri University
 
 Unofficial certificate verification portal for the **Campus Recruitment & Placement Cell (CR&PC)** of Dhanamanjuri University, Imphal, Manipur.  
-Employers, recruiters and students can instantly verify the authenticity of certificate issued by CR&PC
+Employers, recruiters, and students can instantly verify the authenticity of certificates issued by CR&PC.
+
 > **Live URL:** [https://verification-dmu.vercel.app](https://verification-dmu.vercel.app)
 
 ---
@@ -13,7 +14,8 @@ Employers, recruiters and students can instantly verify the authenticity of cert
 - [How It Works](#how-it-works)
 - [Tech Stack (Free Tier)](#tech-stack-free-tier)
 - [Project Structure](#project-structure)
-- [Database Schema](#database-schema)
+- [Database Schema & RPC](#database-schema--rpc)
+- [Environment Variables](#environment-variables)
 - [Security](#security)
 - [Contributing](#contributing)
 - [License](#license)
@@ -22,142 +24,157 @@ Employers, recruiters and students can instantly verify the authenticity of cert
 
 ## Features
 
-- **Instant verification** – Enter a certificate ID or scan a QR code to get the result in real‑time.
-- **Zero‑knowledge architecture** – Certificate IDs are never stored in plain text; lookups use PBKDF2‑hashed keys.
-- **Rate‑limited & abuse‑protected** – Atomic IP‑based rate limiting (10 requests/minute) and strict CORS prevent brute‑force attacks.
-- **Secure by default** – CSP, HSTS, X‑Frame‑Options, and other security headers set globally via `vercel.json`.
-- **Completely free to run** – Uses only services with generous free tiers (see [Tech Stack](#tech-stack-free-tier)).
-- **Mobile‑first responsive design** – Works perfectly on desktops, tablets and phones.
-- **No cookies, no tracking** – Privacy‑respecting; no analytics or user profiling.
-- **Self‑service QR support** – Append `?id=CRC-...` to the URL for direct scanning.
+- **Instant verification** – Enter a certificate ID or scan a QR code to verify records in real-time.
+- **Zero-knowledge architecture** – Plain-text certificate IDs are never stored or logged in the database; lookups use PBKDF2-hashed keys.
+- **Rate-limited & abuse-protected** – Database-level atomic IP-based rate limiting (10 requests/minute per IP) and strict CORS validation prevent brute-force attacks.
+- **Automated Keep-Alive** – Scheduled cron job pings the database daily via an authenticated endpoint to prevent free-tier instance idling or cold starts.
+- **Secure by default** – CSP, HSTS, X-Frame-Options, no-referrer, and permissions policies configured globally via `vercel.json`.
+- **Completely free to run** – Built using services with generous free tiers (Vercel serverless + Supabase).
+- **Mobile-first responsive design** – Sleek, modern interface styled with vanilla CSS, supporting mobile, tablet, and desktop viewports.
+- **No cookies or user tracking** – Privacy-first design with zero analytics trackers, third-party cookies, or profiling.
+- **Self-service QR support** – Deep linking support via `?id=CRC-...` for automatic scanning and verification.
 
 ---
 
 ## Architecture
-```text
-[Browser / QR Scanner]
-        │
-        ▼
-[ Vercel Static Hosting ]
-   ├── index.html
-   ├── style.css
-   └── script.js
-        │ (POST /api/verify)
-        ▼
-[ Vercel Serverless Function ]
-   ├── Input validation (regex)
-   ├── PBKDF2 hash (async, non-blocking)
-   ├── Cache check (Upstash Redis)
-   ├── Database query (Turso SQLite)
-   └── Response (JSON)
-        │
-        ├─ Cache: Upstash Redis (REST API)
-        │     - Rate limiter counters
-        │     - Verification result cache (TTL 1h)
-        │
-        └─ Database: Turso (libsql)
-              - certificates table (id = hashed certificate ID)
 
+```text
+[ Browser / QR Code Scanner ]
+              │
+              ▼
+    [ Vercel Static Hosting ]
+  ├── index.html, privacy.html, terms.html
+  ├── style.css & script.js
+  └── Assets (logos, favicon, background)
+              │
+      ┌───────┴────────────────────────┐
+      │ (POST /api/verify)             │ (GET /api/keep-alive via Vercel Cron)
+      ▼                                ▼
+[ /api/verify ]                 [ /api/keep-alive ]
+  ├── CORS & Input Validation     ├── Timing-safe CRON_SECRET auth
+  ├── IP Rate Limiting (RPC)      └── Database ping query
+  ├── Async PBKDF2 Hashing
+  └── Database Query
+              │                                │
+              └───────────────┬────────────────┘
+                              ▼
+                  [ Supabase PostgreSQL ]
+                    ├── certificates table (PBKDF2 hash PK)
+                    └── increment_rate_limit (RPC Function)
 ```
+
 ---
 
 ## How It Works
 
-1. A user enters a certificate ID (format: `CRC-YYYYMMDD-XXX`) or scans a QR code.
-2. The frontend sends a `POST` request to `/api/verify` with the ID.
-3. The serverless function:
-   - Validates the input format and length.
-   - Checks the IP‑based rate limiter (Upstash Redis, atomic `INCR`).
-   - Hashes the certificate ID using **PBKDF2** (100,000 iterations, SHA‑256, with a secret salt).
-   - Checks the **cache** (Upstash) for a previously verified result.
-   - If not cached, queries the **Turso database** for a matching hash.
-   - Caches the result for 1 hour and returns it as JSON.
-4. The frontend displays either a verified certificate with student details or a “not found” message.
-
-> The certificate ID format and the verification URL `/api/verify` are **fixed** and never change.
+1. **User Input:** A user enters a certificate ID (format: `CRC-YYYYMMDD-XXX` with 3–5 suffix characters) or opens the page via a QR code with `?id=CRC-...`.
+2. **API Verification Request:** The frontend issues a `POST` request to `/api/verify` containing the certificate ID.
+3. **Serverless Execution:**
+   - Validates the request origin against allowed CORS origins.
+   - Validates input structure against format regex `/^CRC-\d{8}-[A-Z0-9]{3,5}$/`.
+   - Calls the `increment_rate_limit` RPC function on Supabase to enforce IP rate limits (10 req/60s).
+   - Generates a non-blocking **PBKDF2-SHA-256** hash (100,000 iterations + secret salt).
+   - Queries the **Supabase `certificates` table** for a record matching the generated hash.
+4. **Display:** The frontend securely renders the verified certificate details (name, programme, issue date, status) or displays a "not found" state.
+5. **Database Keep-Alive:** Vercel Cron triggers `/api/keep-alive` once daily (`0 0 * * *`) with a timing-safe bearer token check to keep the database active and prevent free-tier pauses.
 
 ---
+
 ## Usage
 
-Manual Entry: Navigate to the homepage and enter a valid Certificate ID (e.g., `CRC-20250812-ABC`).
-
-QR Scan appends the ID directly to the URL:e.g. `https://verification-dmu.vercel.app/index.html?id=CRC-20250802-4M2`.
+- **Manual Entry:** Navigate to the homepage, enter a Certificate ID (e.g., `CRC-20250812-ABC` or `CRC-20250802-4M2`), and click **Verify**.
+- **QR Scan Deep Link:** Scan a QR code that directly links to the verification page with query parameters:
+  ```
+  https://verification-dmu.vercel.app/?id=CRC-20250802-4M2
+  ```
 
 ---
+
 ## Tech Stack (Free Tier)
 
-| Layer          | Technology                           | Free Tier Limits                                           |
-|----------------|--------------------------------------|------------------------------------------------------------|
-| Hosting        | [Vercel](https://vercel.com)         | 100 GB‑hours, 1M function invocations/month                |
-| Database       | [Turso](https://turso.tech)          | 9 GB storage, 1 billion row reads/month, 3 databases       |
-| Cache / Rate   | [Upstash Redis](https://upstash.com) | 256 MB, 10,000 commands/day                                |
-| Frontend       | Vanilla (HTML, CSS, JavaScript)      | –                                                          |
-| Dependencies   | [`@libsql/client`](https://www.npmjs.com/package/@libsql/client) (only one runtime dependency)    |
+| Layer               | Technology                        | Details / Free Tier Capacity                                |
+|---------------------|-----------------------------------|-------------------------------------------------------------|
+| **Hosting & API**   | [Vercel](https://vercel.com)      | Serverless functions, Edge network, Cron jobs, Clean URLs   |
+| **Database & Auth** | [Supabase](https://supabase.com)  | PostgreSQL database, RPC rate limiting, Row-level security  |
+| **Frontend**        | Vanilla (HTML5, CSS3, ES6 JS)     | Zero runtime UI frameworks, fast and lightweight            |
+| **Dependencies**    | `@supabase/supabase-js`           | Only single runtime production dependency                   |
 
 ---
 
 ## Project Structure
+
 ```text
 .
 ├── api/
-│   └── verify.js          # Serverless function (POST /api/verify)
-├── index.html             # Main verification page
-├── privacy.html           # Privacy policy
-├── terms.html             # Terms of use
-├── style.css              # Global styles (imports Inter from Google Fonts)
-├── script.js              # Frontend logic (form, QR scan, rendering)
-├── vercel.json            # Clean URLs + global security headers
-├── package.json           # Node.js metadata & dependency
-├── logo.png               # CR&PC logo (you must provide this file)
-└── README.md              # This file
-
+│   ├── keep-alive.js      # Authenticated cron endpoint to prevent database idling
+│   └── verify.js          # Core verification & rate-limiting serverless function
+├── index.html             # Main certificate verification interface
+├── privacy.html           # Privacy policy page
+├── terms.html             # Terms of service page
+├── style.css              # Global styles, variables, dark theme UI, and layout
+├── script.js              # Client-side verification controller, deep linking, & DOM rendering
+├── vercel.json            # Vercel cron configuration, clean URLs, and security headers
+├── package.json           # Node.js dependencies (@supabase/supabase-js)
+├── sitemap.xml            # Search engine sitemap
+├── fav_crc.png            # CR&PC website favicon
+├── logo_w.png             # CR&PC logo (white / light-on-dark)
+├── logo_b.png             # CR&PC logo (dark)
+├── background.png         # Subtle texture background asset
+└── README.md              # Project documentation
 ```
-----
-
-
-
-## Database Schema
-
-Single table `certificates`:
-
-| Column     | Type    | Description                            |
-|------------|---------|-------------------------------------------|
-| `id`       | TEXT PK | PBKDF2‑SHA‑256 hash of the certificate ID |
-| `name`     | TEXT    | Student / candidate name                  |
-| `programme`| TEXT    | programme                                 |
-| `issued_on`| TEXT    | Date of issue (ISO 8601)                  |
-| `status`   | TEXT    | Verification status (e.g. “Verified”)     |
 
 ---
 
+## Database Schema & RPC
+
+### `certificates` Table
+
+| Column       | Type        | Description                                                  |
+|--------------|-------------|--------------------------------------------------------------|
+| `id`         | `TEXT` (PK) | PBKDF2-SHA-256 derived hash (hex) of the Certificate ID      |
+| `name`       | `TEXT`      | Student / Candidate Full Name                                |
+| `programme`  | `TEXT`      | Training or internship programme                             |
+| `issued_on`  | `TEXT`      | Issue date (e.g., `YYYY-MM-DD` or ISO string)                |
+| `status`     | `TEXT`      | Verification status (e.g. `Verified`)                        |
+
+### `increment_rate_limit` RPC Function (PostgreSQL)
+
+Rate limiting is handled directly in PostgreSQL to ensure atomic counter increments and window expiration per client IP address.
+
+---
+
+## Environment Variables
+
+Configure the following environment variables in your Vercel project settings or `.env.local`:
+
+| Variable Name        | Required | Description                                                         |
+|----------------------|----------|---------------------------------------------------------------------|
+| `SUPABASE_URL`       | Yes      | Your Supabase project URL (`https://xyz.supabase.co`)               |
+| `SUPABASE_ANON_KEY`  | Yes      | Your Supabase anon / public API key                                |
+| `SECRET_SALT`        | Yes      | Secret salt for PBKDF2 hashing (minimum 32 characters)             |
+| `ALLOWED_ORIGINS`    | No       | Comma-separated list of allowed CORS origins                        |
+| `CRON_SECRET`        | Yes      | Shared secret token for authenticating Vercel Cron keep-alive pings |
+
+---
 
 ## Security
 
-This portal is built with security first. Here are the key measures:
-
-- **All security headers** are set globally in `vercel.json`.
-- **No inline event handlers** – all event binding is done via `addEventListener` to comply with CSP.
-- **Rate limiting** uses an atomic `INCR`‑first pattern with a defensive `DEL` fallback to prevent orphaned keys.
-- **Async PBKDF2** – hashing runs in the libuv thread pool, never blocking the event loop.
-- **CORS validation** restricts access to trusted origins; non‑browser clients are blocked by IP rate limiting.
-- **Parameterised SQL queries** eliminate injection risk.
-- **No secrets** in the client bundle – all sensitive logic runs server‑side.
-- **Zero‑knowledge design** – plain‑text certificate IDs are never stored or logged.
-
-> A full security audit was conducted on the final codebase (July 2026). No critical or high‑risk findings remain.
-
+- **Strict Security Headers:** `Content-Security-Policy`, `Strict-Transport-Security`, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, and `Permissions-Policy` are enforced globally via `vercel.json`.
+- **Zero-Knowledge Data Storage:** Plain-text certificate IDs never touch the database or server logs; all lookups are performed using 100,000-iteration PBKDF2-SHA-256 hashes.
+- **Timing-Safe Cron Authentication:** The `/api/keep-alive` endpoint uses `crypto.timingSafeEqual` to prevent timing attacks on authorization headers.
+- **No Inline Event Handlers:** Client scripts attach handlers via `addEventListener` to maintain full CSP compatibility (`'unsafe-inline'` avoided in script execution).
+- **Asynchronous Hashing:** Password-based key derivation (PBKDF2) runs via Node.js's asynchronous libuv pool without blocking event loop concurrency.
+- **No Client Secrets:** All database keys and cryptographic salts are kept exclusively in serverless environment variables.
 
 ---
 
 ## Contributing
 
-This portal is maintained by the Interns of Campus Recruitment & Placement Cell, DMU.  
+This portal is maintained by the Interns of Campus Recruitment & Placement Cell, Dhanamanjuri University.  
 To contribute or report issues, please contact: [crcdmu.manipur@gmail.com](mailto:crcdmu.manipur@gmail.com)
 
 ---
 
 ## License
 
-This project is proprietary and built specifically for Campus Recruitment & Placement Cell, Dhanamanjuri University.
-
----
+This project is proprietary and built specifically for the **Campus Recruitment & Placement Cell, Dhanamanjuri University**.
