@@ -168,45 +168,36 @@ function smoothScrollTo(targetPosition, duration) {
   requestAnimationFrame(animation);
 }
 
-function renderVerificationSuccess(studentData, certId) {
-  if (certId) currentVerifiedId = certId.trim().toUpperCase();
+// Mobile Auto-Scroll (Landing Page Only)
+window.addEventListener('load', () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  
+  if (!urlParams.get('id') && window.innerWidth <= 1024) {
+    setTimeout(() => {
+      // Only auto-scroll if user hasn't already scrolled manually
+      if (window.scrollY < 40) {
+        const formSection = document.querySelector('.form-side');
+        if (formSection && formSection.style.display !== 'none') {
+          const targetY = formSection.getBoundingClientRect().top + window.scrollY;
+          smoothScrollTo(targetY, 1200);
+        }
+      }
+    }, 800); 
+  }
+});
 
-  const isStatusValid = (studentData.status || '').trim().toLowerCase() === 'valid';
+function renderVerificationSuccess(studentData, certId) {
+  if (certId) currentVerifiedId = certId;
 
   document.body.classList.add('verified-view-active');
-  if (!isStatusValid) {
-    document.body.classList.add('status-invalid');
-  } else {
-    document.body.classList.remove('status-invalid');
-  }
-
-  const landingView = document.getElementById('landing-view');
-  if (landingView) landingView.style.display = 'none';
-
+  document.getElementById('landing-view').style.display = 'none';
   const verifiedView = document.getElementById('verified-view');
-  if (verifiedView) {
-    verifiedView.style.display = 'flex';
-    verifiedView.setAttribute('data-verification-timestamp', new Date().toISOString());
-  }
+  verifiedView.style.display = 'flex'; 
+  
+  // Reset scroll to top so verified view with official database badge is framed cleanly
+  window.scrollTo(0, 0);
 
-  // Update Status Heading & Description based on authenticity & revocation
-  const headingElem = document.querySelector('.status-heading');
-  const descElem = document.querySelector('.status-description');
-  const badgeTextElem = document.querySelector('.database-badge span');
-
-  if (headingElem) {
-    headingElem.textContent = isStatusValid ? 'Official Record Verified' : `Certificate ${studentData.status || 'Revoked'}`;
-  }
-  if (descElem) {
-    descElem.innerHTML = isStatusValid
-      ? 'This certificate is authentic and has been<br> issued by Dhanamanjuri University.'
-      : `This certificate record exists in the university database but is currently flagged as <strong>${(studentData.status || 'REVOKED').toUpperCase()}</strong>.`;
-  }
-  if (badgeTextElem) {
-    badgeTextElem.textContent = isStatusValid
-      ? 'This is an official record from the university database.'
-      : `Status: ${studentData.status || 'Revoked'} — Record requires institutional review.`;
-  }
+  verifiedView.setAttribute('data-verification-timestamp', new Date().toISOString());
 
   const idElem = document.getElementById('vd-cert-id');
   if (idElem) idElem.textContent = currentVerifiedId || '';
@@ -221,16 +212,7 @@ function renderVerificationSuccess(studentData, certId) {
   if (dateElem) dateElem.textContent = studentData.issuedOn || '';
 
   const statusElem = document.getElementById('vd-status');
-  if (statusElem) {
-    statusElem.textContent = studentData.status || '';
-    if (!isStatusValid) {
-      statusElem.classList.remove('valid-status');
-      statusElem.classList.add('invalid-status');
-    } else {
-      statusElem.classList.remove('invalid-status');
-      statusElem.classList.add('valid-status');
-    }
-  }
+  if (statusElem) statusElem.textContent = studentData.status || '';
 
   const printTimeElem = document.getElementById('vd-print-time');
   if (printTimeElem) {
@@ -242,17 +224,6 @@ function renderVerificationSuccess(studentData, certId) {
       hour: '2-digit',
       minute: '2-digit'
     });
-  }
-
-  // Mobile: Smooth scroll to results
-  if (window.innerWidth <= 1024) {
-    setTimeout(() => {
-      const detailsPanel = document.querySelector('.details-panel');
-      if (detailsPanel) {
-        const yOffset = detailsPanel.getBoundingClientRect().top + window.scrollY - 20;
-        smoothScrollTo(yOffset, 1200);
-      }
-    }, 300);
   }
 }
 
@@ -310,32 +281,20 @@ function renderRecordNotFound(displayId, customMessage) {
       inputField.select();
     }
   });
+
+  if (window.innerWidth <= 1024) {
+    setTimeout(() => {
+      const formSection = document.querySelector('.form-side');
+      if (formSection) {
+        const targetY = formSection.getBoundingClientRect().top + window.scrollY;
+        smoothScrollTo(targetY, 600);
+      }
+    }, 150);
+  }
 }
 
 function resetSearch() {
-  if (window.location.search) {
-    window.history.replaceState({}, document.title, window.location.pathname);
-  }
-  document.body.classList.remove('verified-view-active', 'status-invalid');
-  
-  const verifiedView = document.getElementById('verified-view');
-  const landingView = document.getElementById('landing-view');
-  const searchSection = document.getElementById('search-section');
-  const resultContainer = document.getElementById('resultContainer');
-  const statusDisplay = document.getElementById('status-message');
-
-  if (verifiedView) verifiedView.style.display = 'none';
-  if (landingView) landingView.style.display = 'grid';
-  if (searchSection) searchSection.style.display = 'block';
-  if (resultContainer) resultContainer.style.display = 'none';
-  if (statusDisplay) statusDisplay.textContent = '';
-
-  const inputField = document.getElementById('cert-id-input');
-  if (inputField) {
-    inputField.value = '';
-    inputField.focus();
-  }
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  window.location.href = window.location.pathname;
 }
 
 // Mailto logic: opens default mail app on mobile, Gmail in a new tab on desktop
