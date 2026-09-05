@@ -1,0 +1,8 @@
+server.js
+package.json
+package-lock.json
+README.md
+schema.sql
+.env*
+.git
+.DS_Store

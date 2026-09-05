@@ -2,7 +2,15 @@
   "name": "certificate-verification",
   "version": "2.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20.6.0"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
   "dependencies": {
-    "@supabase/supabase-js": "^2.39.0"
+    "@supabase/supabase-js": "^2.39.0",
+    "express": "^5.2.1"
   }
 }

@@ -7,13 +7,18 @@ const CERT_ID_REGEX = /^CRC-\d{8}-[A-Z0-9]{3,5}$/;
 const MAX_REQUESTS = 10;
 const WINDOW_SECS = 60;
 
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+let cachedSupabase = null;
+function getSupabase() {
+  if (!cachedSupabase) {
+    const url = process.env.SUPABASE_URL;
+    const key = process.env.SUPABASE_ANON_KEY;
+    if (!url || !key) return null;
+    cachedSupabase = createClient(url, key);
+  }
+  return cachedSupabase;
+}
 
-// Initialize Supabase Client
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'https://verification-dmu.vercel.app,http://localhost:3000')
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'https://verification-dmu.vercel.app,http://localhost:3000,http://127.0.0.1:3000')
   .split(',')
   .map(o => o.trim().replace(/\/$/, '').toLowerCase());
 
@@ -21,8 +26,8 @@ const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'https://verification-dm
 function validateCORS(req, res) {
   const origin = req.headers.origin;
   if (!origin) {
-    res.status(403).json({ success: false, message: 'Forbidden: Missing Origin.' });
-    return false;
+    // Same-origin or non-browser request without Origin header
+    return true;
   }
   const normalized = origin.replace(/\/$/, '').toLowerCase();
   if (!ALLOWED_ORIGINS.includes(normalized)) {
@@ -32,6 +37,7 @@ function validateCORS(req, res) {
   res.setHeader('Access-Control-Allow-Origin', origin);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Max-Age', '86400');
   return true;
 }
 
@@ -47,7 +53,7 @@ function validateCertificateId(certificateId) {
   return { valid: true, cleanId };
 }
 
-// Hash Generation (async, non-blocking)
+// Hash Generation (PBKDF2-SHA-256 with 100,000 iterations)
 async function generateHash(certificateId) {
   return new Promise((resolve, reject) => {
     crypto.pbkdf2(certificateId, SECRET_KEY, 100000, 32, 'sha256', (err, derivedKey) => {
@@ -59,6 +65,11 @@ async function generateHash(certificateId) {
 
 // Main Handler
 module.exports = async function handler(req, res) {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+
+  if (!validateCORS(req, res)) return;
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, message: 'Method Not Allowed.' });
@@ -69,31 +80,44 @@ module.exports = async function handler(req, res) {
     return res.status(500).json({ success: false, message: 'Service temporarily unavailable.' });
   }
 
-  if (!validateCORS(req, res)) return;
+  const supabase = getSupabase();
+  if (!supabase) {
+    console.error('Supabase credentials missing');
+    return res.status(500).json({ success: false, message: 'Database service configuration error.' });
+  }
 
-  const clientIp = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || 'unknown';
+  // Reliable IP extraction (prioritizing Vercel Edge headers)
+  const clientIp = 
+    req.headers['x-vercel-forwarded-for']?.split(',')[0].trim() ||
+    req.headers['x-real-ip'] ||
+    (req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',').pop().trim() : null) ||
+    req.socket?.remoteAddress ||
+    '127.0.0.1';
   
   // Rate Limiting (Using Supabase RPC Function)
- const { data: limitData, error: limitError } = await supabase.rpc('increment_rate_limit', { 
+  const { data: limitData, error: limitError } = await supabase.rpc('increment_rate_limit', { 
     client_ip: clientIp, 
     max_reqs: MAX_REQUESTS, 
     window_seconds: WINDOW_SECS 
   });
 
-  // 1. Handle Database/RPC errors
+  // Handle Database/RPC errors
   if (limitError) {
     console.error('Supabase RPC Error:', limitError);
     return res.status(500).json({ success: false, message: 'Internal Server Error during verification.' });
   }
 
-  // 2. Handle the Rate Limit response
+  // Handle Rate Limit exceeded
   if (!limitData || !limitData.allowed) {
+    res.setHeader('Retry-After', '60');
     return res.status(429).json({ success: false, message: 'Too many requests. Please try again later.' });
   }
+
   let body;
   try {
-    if (!req.body || typeof req.body !== 'object') throw new Error();
-    body = req.body;
+    if (!req.body) throw new Error();
+    body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    if (typeof body !== 'object' || body === null) throw new Error();
   } catch {
     return res.status(400).json({ success: false, message: 'Invalid request body.' });
   }
@@ -112,19 +136,42 @@ module.exports = async function handler(req, res) {
     return res.status(500).json({ success: false, message: 'Verification error.' });
   }
 
-  // Query Supabase for the certificate
-  const { data: row, error } = await supabase
-    .from('certificates')
-    .select('name, programme, issued_on, status')
-    .eq('id', candidateHash)
-    .single();
+  // Dual lookup compatibility: Try get_certificate_by_hash RPC first, fallback to direct query
+  let row = null;
+  let rpcAttempted = false;
 
-  if (error) {
-    if (error.code === 'PGRST116') { // Postgres error code for 0 rows returned on .single()
-      return res.status(404).json({ success: false, message: 'Record not found.' });
+  try {
+    const { data: rpcRows, error: rpcError } = await supabase.rpc('get_certificate_by_hash', { 
+      p_hash: candidateHash 
+    });
+    if (!rpcError) {
+      rpcAttempted = true;
+      if (rpcRows && rpcRows.length > 0) {
+        row = rpcRows[0];
+      }
     }
-    console.error('Supabase query error:', error);
-    return res.status(500).json({ success: false, message: 'Verification service unavailable.' });
+  } catch {
+    rpcAttempted = false;
+  }
+
+  // Fallback to table query if RPC is not deployed yet in PostgreSQL
+  if (!rpcAttempted) {
+    const { data: directRow, error: directError } = await supabase
+      .from('certificates')
+      .select('name, programme, issued_on, status')
+      .eq('id', candidateHash)
+      .single();
+
+    if (directError) {
+      if (directError.code === 'PGRST116') { // Postgres code for 0 rows returned
+        return res.status(404).json({ success: false, message: 'Record not found.' });
+      }
+      console.error('Supabase query error:', directError);
+      return res.status(500).json({ success: false, message: 'Verification service unavailable.' });
+    }
+    row = directRow;
+  } else if (!row) {
+    return res.status(404).json({ success: false, message: 'Record not found.' });
   }
 
   const studentData = {
@@ -134,5 +181,5 @@ module.exports = async function handler(req, res) {
     status: row.status,
   };
 
-  return res.status(200).json({ success: true, data: studentData });
+  return res.status(200).json({ success: true, data: studentData, cleanId: validation.cleanId });
 };
