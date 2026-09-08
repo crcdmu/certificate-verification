@@ -16,6 +16,32 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
+  // Preloader animation using dmu-loader.svg
+  const initPreloader = () => {
+    const loader = document.getElementById('loader') || document.getElementById('loading-overlay');
+    if (!loader) {
+      triggerMobileAutoScroll();
+      return;
+    }
+
+    // dmu-loader.svg runs stroke trace (4.4s) + fill (1.0s) = 5.4s total SVG animation.
+    // End the loading animation 1s after SVG completion (5.4s + 1.0s = 6.4s)
+    setTimeout(() => {
+      // Begin smooth fade-out
+      loader.classList.add('hide');
+
+      // Once fade-out transition (1.0s) completely ends:
+      setTimeout(() => {
+        loader.style.display = 'none';
+
+        // Start mobile autoscroll strictly AFTER the loading animation ends
+        triggerMobileAutoScroll();
+      }, 1000);
+    }, 6400);
+  };
+
+  initPreloader();
+
   // Wire up the static "Verify Another ID" button (CSP-safe, no inline onclick)
   const verifyAnotherBtn = document.getElementById('verify-another-btn');
   if (verifyAnotherBtn) {
@@ -73,6 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const verifyBtn = document.getElementById('verify-btn');
     const btnText = document.getElementById('btn-text');
+    const loadingOverlay = document.getElementById('loading-overlay');
 
     if (verifyBtn) verifyBtn.disabled = true;
     if (btnText) btnText.textContent = 'Querying University Records...';
@@ -168,11 +195,12 @@ function smoothScrollTo(targetPosition, duration) {
   requestAnimationFrame(animation);
 }
 
-// Mobile Auto-Scroll (Landing Page Only)
-window.addEventListener('load', () => {
+// Mobile Auto-Scroll (Landing Page Only - triggers strictly after loading animation ends)
+function triggerMobileAutoScroll() {
   const urlParams = new URLSearchParams(window.location.search);
   
   if (!urlParams.get('id') && window.innerWidth <= 1024) {
+    // Gentle 300ms pause so the user sees the landing page before smooth scrolling
     setTimeout(() => {
       // Only auto-scroll if user hasn't already scrolled manually
       if (window.scrollY < 40) {
@@ -182,9 +210,9 @@ window.addEventListener('load', () => {
           smoothScrollTo(targetY, 1200);
         }
       }
-    }, 800); 
+    }, 300);
   }
-});
+}
 
 function renderVerificationSuccess(studentData, certId) {
   if (certId) currentVerifiedId = certId;
