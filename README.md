@@ -116,9 +116,8 @@ Employers, recruiters, and students can instantly verify the authenticity of cer
 ├── vercel.json            # Vercel cron configuration, clean URLs, and security headers
 ├── package.json           # Node.js dependencies (@supabase/supabase-js)
 ├── sitemap.xml            # Search engine sitemap
-├── fav_crc.png            # CR&PC website favicon
-├── logo_w.png             # CR&PC logo (white / light-on-dark)
-├── logo_b.png             # CR&PC logo (dark)
+├── dmu.svg                # CR&PC website favicon (SVG)
+├── logo.svg               # CR&PC university logo (vector SVG)
 ├── background.png         # Subtle texture background asset
 └── README.md              # Project documentation
 ```
