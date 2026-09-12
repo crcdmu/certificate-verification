@@ -298,6 +298,200 @@ document.addEventListener('DOMContentLoaded', () => {
     runVerification(cleanScanned);
   }
 
+  // Input Auto-Formatting & Masking (e.g. CRC-YYYYMMDD-XXX)
+  const certInput = document.getElementById('cert-id-input');
+  if (certInput) {
+    certInput.addEventListener('input', () => {
+      const raw = certInput.value;
+      certInput.value = formatCertificateInput(raw);
+    });
+  }
+
+  function formatCertificateInput(val) {
+    if (!val) return '';
+    const clean = val.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (clean.startsWith('CRC')) {
+      const rest = clean.slice(3);
+      const datePart = rest.slice(0, 8);
+      const suffix = rest.slice(8, 13);
+      let res = 'CRC';
+      if (datePart.length > 0) res += '-' + datePart;
+      if (suffix.length > 0) res += '-' + suffix;
+      return res;
+    } else if (clean.length > 0 && !'CRC'.startsWith(clean)) {
+      return val.toUpperCase().replace(/[^A-Z0-9-]/g, '');
+    }
+    return clean;
+  }
+
+  // Built-in Camera QR Scanner Logic
+  const openQrBtn = document.getElementById('open-qr-scanner-btn');
+  const closeQrBtn = document.getElementById('close-qr-modal-btn');
+  const qrModal = document.getElementById('qr-modal');
+  const qrVideo = document.getElementById('qr-video');
+  const switchCamBtn = document.getElementById('switch-camera-btn');
+  const qrFileInput = document.getElementById('qr-file-input');
+  const qrFeedback = document.getElementById('qr-scan-feedback');
+
+  let activeStream = null;
+  let qrScanActive = false;
+  let currentFacingMode = 'environment';
+  let barcodeDetector = null;
+
+  if ('BarcodeDetector' in window) {
+    try {
+      barcodeDetector = new window.BarcodeDetector({ formats: ['qr_code'] });
+    } catch (e) {
+      console.warn('Native BarcodeDetector initialization notice:', e);
+    }
+  }
+
+  const stopScanner = () => {
+    qrScanActive = false;
+    if (activeStream) {
+      activeStream.getTracks().forEach(track => track.stop());
+      activeStream = null;
+    }
+    if (qrVideo) qrVideo.srcObject = null;
+    if (qrModal && qrModal.open) {
+      qrModal.close();
+    }
+  };
+
+  const processDetectedQr = (rawValue) => {
+    if (!rawValue) return;
+    stopScanner();
+
+    let certId = rawValue.trim();
+    try {
+      const parsedUrl = new URL(certId);
+      const urlId = parsedUrl.searchParams.get('id');
+      if (urlId) certId = urlId;
+    } catch {
+      // Not a full URL, parse directly
+    }
+
+    const match = certId.match(/CRC-\d{8}-[A-Z0-9]{3,5}/i);
+    if (match) {
+      certId = match[0].toUpperCase();
+    }
+
+    const input = document.getElementById('cert-id-input');
+    if (input) input.value = certId;
+    showToast(`QR Code Scanned: ${certId}`);
+    runVerification(certId);
+  };
+
+  const startScanner = async () => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      if (qrFeedback) qrFeedback.textContent = 'Camera not supported on this browser. Upload QR image below.';
+      if (qrModal && !qrModal.open) qrModal.showModal();
+      return;
+    }
+
+    try {
+      if (qrFeedback) qrFeedback.textContent = 'Accessing camera...';
+      if (qrModal && !qrModal.open) qrModal.showModal();
+
+      if (activeStream) {
+        activeStream.getTracks().forEach(track => track.stop());
+      }
+
+      activeStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: currentFacingMode } }
+      });
+
+      if (qrVideo) {
+        qrVideo.srcObject = activeStream;
+        await qrVideo.play();
+      }
+
+      if (switchCamBtn) switchCamBtn.style.display = 'inline-flex';
+      qrScanActive = true;
+
+      if (barcodeDetector) {
+        if (qrFeedback) qrFeedback.textContent = 'Align certificate QR code within frame';
+        const scanFrame = async () => {
+          if (!qrScanActive || !qrVideo || qrVideo.readyState < 2) {
+            if (qrScanActive) requestAnimationFrame(scanFrame);
+            return;
+          }
+
+          try {
+            const barcodes = await barcodeDetector.detect(qrVideo);
+            if (barcodes && barcodes.length > 0 && barcodes[0].rawValue) {
+              processDetectedQr(barcodes[0].rawValue);
+              return;
+            }
+          } catch (err) {
+            // Frame skip
+          }
+
+          if (qrScanActive) requestAnimationFrame(scanFrame);
+        };
+        requestAnimationFrame(scanFrame);
+      } else {
+        if (qrFeedback) {
+          qrFeedback.innerHTML = 'Direct video decode unsupported on this browser engine.<br>Upload QR image below or type ID.';
+        }
+      }
+    } catch (err) {
+      console.error('Camera access error:', err);
+      if (qrFeedback) qrFeedback.textContent = 'Camera permission denied. Use "Upload QR Image" below.';
+    }
+  };
+
+  if (openQrBtn) openQrBtn.addEventListener('click', startScanner);
+  if (closeQrBtn) closeQrBtn.addEventListener('click', stopScanner);
+  if (qrModal) {
+    qrModal.addEventListener('close', stopScanner);
+    qrModal.addEventListener('click', (e) => {
+      const rect = qrModal.getBoundingClientRect();
+      if (
+        e.clientX < rect.left ||
+        e.clientX > rect.right ||
+        e.clientY < rect.top ||
+        e.clientY > rect.bottom
+      ) {
+        stopScanner();
+      }
+    });
+  }
+
+  if (switchCamBtn) {
+    switchCamBtn.addEventListener('click', () => {
+      currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
+      startScanner();
+    });
+  }
+
+  if (qrFileInput) {
+    qrFileInput.addEventListener('change', async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      if (!barcodeDetector) {
+        showToast('Image scanning not supported on this browser. Please enter ID.');
+        return;
+      }
+
+      try {
+        if (qrFeedback) qrFeedback.textContent = 'Analyzing image...';
+        const bitmap = await createImageBitmap(file);
+        const barcodes = await barcodeDetector.detect(bitmap);
+        if (barcodes && barcodes.length > 0 && barcodes[0].rawValue) {
+          processDetectedQr(barcodes[0].rawValue);
+        } else {
+          if (qrFeedback) qrFeedback.textContent = 'No QR code found in image. Please try another image.';
+          showToast('No QR code detected in image.');
+        }
+      } catch (err) {
+        console.error('File QR decode error:', err);
+        showToast('Could not process image.');
+      }
+    });
+  }
+
   // Manual Form Submission
   verifyForm.addEventListener('submit', (event) => {
     event.preventDefault(); 
@@ -517,8 +711,49 @@ function renderVerificationSuccess(studentData, certId) {
   const dateElem = document.getElementById('vd-date');
   if (dateElem) dateElem.textContent = studentData.issuedOn || '';
 
+  const rawStatus = (studentData.status || 'Valid').trim();
+  const isRecordValid = rawStatus.toLowerCase() === 'valid';
+
   const statusElem = document.getElementById('vd-status');
-  if (statusElem) statusElem.textContent = studentData.status || '';
+  if (statusElem) {
+    statusElem.textContent = rawStatus;
+    if (isRecordValid) {
+      statusElem.classList.remove('invalid-status');
+      statusElem.classList.add('valid-status');
+    } else {
+      statusElem.classList.remove('valid-status');
+      statusElem.classList.add('invalid-status');
+    }
+  }
+
+  // Dynamic Header & Badges depending on Valid vs Revoked / Inactive
+  const headingElem = document.getElementById('status-heading');
+  const descElem = document.getElementById('status-description');
+  const badgeText = document.getElementById('badge-status-text');
+  const statusValidIcon = document.getElementById('status-valid-icon');
+  const statusInvalidIcon = document.getElementById('status-invalid-icon');
+  const badgeValidIcon = document.getElementById('badge-valid-icon');
+  const badgeInvalidIcon = document.getElementById('badge-invalid-icon');
+
+  if (isRecordValid) {
+    document.body.classList.remove('status-invalid');
+    if (headingElem) headingElem.textContent = 'Official Record Verified';
+    if (descElem) descElem.innerHTML = 'This certificate is authentic and has been<br> issued by Dhanamanjuri University.';
+    if (badgeText) badgeText.textContent = 'This is an official record from the university database.';
+    if (statusValidIcon) statusValidIcon.style.display = 'block';
+    if (statusInvalidIcon) statusInvalidIcon.style.display = 'none';
+    if (badgeValidIcon) badgeValidIcon.style.display = 'block';
+    if (badgeInvalidIcon) badgeInvalidIcon.style.display = 'none';
+  } else {
+    document.body.classList.add('status-invalid');
+    if (headingElem) headingElem.textContent = `Certificate Inactive (${rawStatus})`;
+    if (descElem) descElem.innerHTML = `Warning: This certificate credential is marked as <strong>${rawStatus}</strong> in university records.`;
+    if (badgeText) badgeText.textContent = `Database Alert: Credential status is recorded as ${rawStatus}.`;
+    if (statusValidIcon) statusValidIcon.style.display = 'none';
+    if (statusInvalidIcon) statusInvalidIcon.style.display = 'block';
+    if (badgeValidIcon) badgeValidIcon.style.display = 'none';
+    if (badgeInvalidIcon) badgeInvalidIcon.style.display = 'block';
+  }
 
   const printTimeElem = document.getElementById('vd-print-time');
   if (printTimeElem) {
@@ -531,6 +766,11 @@ function renderVerificationSuccess(studentData, certId) {
       minute: '2-digit'
     });
   }
+
+  // Focus redirection for screen readers and keyboard navigation
+  if (headingElem) {
+    headingElem.focus();
+  }
 }
 
 // Feature 3: Record Not Found
@@ -541,13 +781,13 @@ function renderRecordNotFound(displayId, customMessage) {
   resultContainer.innerHTML = `
     <div class="not-found-card">
       <div class="not-found-icon-box">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
           <circle cx="12" cy="12" r="10"></circle>
           <line x1="15" y1="9" x2="9" y2="15"></line>
           <line x1="9" y1="9" x2="15" y2="15"></line>
         </svg>
       </div>
-      <div class="not-found-title">RECORD NOT FOUND</div>
+      <div class="not-found-title" id="not-found-heading" tabindex="-1">RECORD NOT FOUND</div>
       <p class="not-found-desc" id="error-msg-container"></p>
       <div class="format-reminder">
         <strong>Expected Format:</strong> <code>CRC-YYYYMMDD-XXX</code><br>
@@ -573,8 +813,9 @@ function renderRecordNotFound(displayId, customMessage) {
     msgContainer.appendChild(document.createTextNode(" exists in the repository."));
   }
 
+  const backBtn = document.getElementById('back-to-search-btn');
   // Attach listener to the dynamically created button (CSP-safe)
-  document.getElementById('back-to-search-btn').addEventListener('click', () => {
+  backBtn.addEventListener('click', () => {
     if (window.location.search) {
       window.history.replaceState({}, document.title, window.location.pathname);
     }
@@ -588,6 +829,9 @@ function renderRecordNotFound(displayId, customMessage) {
     }
   });
 
+  // Focus redirection for not-found announcement
+  backBtn.focus();
+
   if (window.innerWidth <= 1024) {
     setTimeout(() => {
       const formSection = document.querySelector('.form-side');
@@ -600,7 +844,23 @@ function renderRecordNotFound(displayId, customMessage) {
 }
 
 function resetSearch() {
-  window.location.href = window.location.pathname;
+  if (window.location.search) {
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+  document.body.classList.remove('verified-view-active');
+  document.body.classList.remove('status-invalid');
+  
+  const verifiedView = document.getElementById('verified-view');
+  if (verifiedView) verifiedView.style.display = 'none';
+  
+  const landingView = document.getElementById('landing-view');
+  if (landingView) landingView.style.display = '';
+  
+  const inputField = document.getElementById('cert-id-input');
+  if (inputField) {
+    inputField.value = '';
+    inputField.focus();
+  }
 }
 
 // Mailto logic: opens default mail app on mobile, Gmail in a new tab on desktop
@@ -627,6 +887,16 @@ document.querySelectorAll('a.mailto-fallback').forEach(link => {
     } else {
       const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}&su=${encodeURIComponent(subject)}`;
       window.open(gmailUrl, '_blank', 'noopener,noreferrer');
+    }
+  });
+});
+
+// Back link logic: go back without reloading if possible
+document.querySelectorAll('a.back-link').forEach(link => {
+  link.addEventListener('click', function(e) {
+    if (window.history.length > 1 && document.referrer.includes(window.location.host)) {
+      e.preventDefault();
+      window.history.back();
     }
   });
 });

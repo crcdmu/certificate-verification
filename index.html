@@ -76,7 +76,7 @@
                 </div>
             </div>
             <div class="header-badge">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="9 12 11 14 15 10"></polyline></svg>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="9 12 11 14 15 10"></polyline></svg>
                 <div class="badge-text">
                     <strong>CR&PC Records</strong>
                     <span>Officially Verified</span>
@@ -132,7 +132,7 @@
                         <form id="verify-form">
                             <label for="cert-id-input" class="sr-only">Certificate ID</label>
                             <div class="input-group">
-                                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
     <rect x="3" y="5" width="18" height="14" rx="2" ry="2"></rect>
     <path d="M8 15v-1a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v1"></path>
     <circle cx="12" cy="9" r="2"></circle>
@@ -149,10 +149,23 @@
                                 >
                             </div>
                             
-                            <button type="submit" class="btn-primary" id="verify-btn">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                                <span id="btn-text">Verify Certificate</span>
-                            </button>
+                            <div class="combined-action-btn">
+                                <button type="submit" class="combined-verify-btn" id="verify-btn">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                    <span id="btn-text">Verify Certificate</span>
+                                </button>
+                                <div class="combined-btn-divider" aria-hidden="true"></div>
+                                <button type="button" class="combined-qr-btn" id="open-qr-scanner-btn" title="Scan QR Code from Certificate" aria-label="Scan QR Code">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
+                                        <path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
+                                        <path d="M21 17v2a2 2 0 0 1-2 2h-2"></path>
+                                        <path d="M7 21H5a2 2 0 0 1-2-2v-2"></path>
+                                        <rect x="7" y="7" width="10" height="10" rx="1"></rect>
+                                    </svg>
+                                    <span>Scan QR</span>
+                                </button>
+                            </div>
                         </form>
 
                         <div id="status-message" aria-live="polite"></div>
@@ -164,7 +177,7 @@
 
                         <a href="mailto:crcdmu.manipur@gmail.com?subject=Certificate%20Verification%20Help" class="help-box mailto-fallback">
                             <div>
-                                <strong>Need Help?</strong>
+                                <strong>Need Help? Click here</strong>
                                 <p>If you face any issues, please contact the University Placement Cell.</p>
                             </div>
                         </a>
@@ -180,18 +193,20 @@
                 <div class="status-icon-wrapper">
                     <div class="pulse-ring-outer">
                         <div class="pulse-ring-inner">
-                            <div class="check-circle">
-                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <div class="check-circle" id="status-icon-circle">
+                                <svg id="status-valid-icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                <svg id="status-invalid-icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="display: none;" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                             </div>
                         </div>
                     </div>
                 </div>
-                <h2 class="status-heading">Official Record Verified</h2>
-                <p class="status-description">This certificate is authentic and has been<br> issued by Dhanamanjuri University.</p>
+                <h2 class="status-heading" id="status-heading" tabindex="-1">Official Record Verified</h2>
+                <p class="status-description" id="status-description">This certificate is authentic and has been<br> issued by Dhanamanjuri University.</p>
                 
-                <div class="database-badge">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="9 12 11 14 15 10"></polyline></svg>
-                    <span>This is an official record from the university database.</span>
+                <div class="database-badge" id="database-badge">
+                    <svg id="badge-valid-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="9 12 11 14 15 10"></polyline></svg>
+                    <svg id="badge-invalid-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" style="display: none;" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                    <span id="badge-status-text">This is an official record from the university database.</span>
                 </div>
             </section>
 
@@ -308,6 +323,50 @@
         <!-- Toast Notice for Copy Feedback -->
         <div id="toast-notice" class="toast-notice" role="status" aria-live="polite"></div>
     </div>
+
+    <!-- Built-in Camera QR Scanner Modal Dialog -->
+    <dialog id="qr-modal" class="qr-modal" aria-labelledby="qr-modal-title">
+        <div class="qr-modal-content">
+            <div class="qr-modal-header">
+                <div class="qr-modal-title-wrap">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
+                        <path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
+                        <path d="M21 17v2a2 2 0 0 1-2 2h-2"></path>
+                        <path d="M7 21H5a2 2 0 0 1-2-2v-2"></path>
+                        <rect x="7" y="7" width="10" height="10" rx="1"></rect>
+                    </svg>
+                    <h3 id="qr-modal-title">Scan Certificate QR</h3>
+                </div>
+                <button type="button" id="close-qr-modal-btn" class="qr-close-btn" aria-label="Close QR Scanner">&times;</button>
+            </div>
+            
+            <div class="qr-video-viewport">
+                <video id="qr-video" playsinline muted autoplay></video>
+                <canvas id="qr-canvas" style="display: none;"></canvas>
+                <div class="qr-reticle">
+                    <div class="qr-corner top-left"></div>
+                    <div class="qr-corner top-right"></div>
+                    <div class="qr-corner bottom-left"></div>
+                    <div class="qr-corner bottom-right"></div>
+                    <div class="qr-laser-beam"></div>
+                </div>
+                <div id="qr-scan-feedback" class="qr-scan-feedback" aria-live="polite">Align certificate QR code within the frame</div>
+            </div>
+
+            <div class="qr-modal-footer">
+                <button type="button" id="switch-camera-btn" class="qr-btn qr-btn-switch" style="display: none;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                    <span>Switch Camera</span>
+                </button>
+                <label class="qr-btn qr-btn-upload">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    <span>Upload QR Image</span>
+                    <input type="file" id="qr-file-input" accept="image/*" class="sr-only">
+                </label>
+            </div>
+        </div>
+    </dialog>
 
     <script src="script.js"></script>
 </body>

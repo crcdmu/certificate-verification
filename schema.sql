@@ -71,6 +71,9 @@ DECLARE
     now_ts TIMESTAMPTZ := now();
     time_diff INTERVAL;
 BEGIN
+    -- Opportunistic cleanup: purge stale IP records older than 1 hour to prevent table bloat
+    DELETE FROM public.rate_limits WHERE first_request < (now_ts - INTERVAL '1 hour');
+
     SELECT * INTO rec FROM public.rate_limits WHERE ip = client_ip;
 
     IF rec IS NULL THEN
@@ -101,7 +104,15 @@ $$;
 GRANT EXECUTE ON FUNCTION public.increment_rate_limit(text, int, int) TO anon, authenticated;
 
 -- 5. Row Level Security (RLS) Configuration
--- (Optional/Recommended): When ready to lock down direct table reading, enable RLS:
--- ALTER TABLE public.certificates ENABLE ROW LEVEL SECURITY;
--- 
--- Note: Once enabled, queries must go through get_certificate_by_hash() or service_role.
+-- Lock down direct public table reading. All client lookups must go through get_certificate_by_hash().
+ALTER TABLE public.certificates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.rate_limits ENABLE ROW LEVEL SECURITY;
+
+-- Revoke direct table access from public anon role
+REVOKE ALL ON TABLE public.certificates FROM anon;
+REVOKE ALL ON TABLE public.rate_limits FROM anon;
+
+-- Ensure execute permissions on security definer RPC functions
+GRANT EXECUTE ON FUNCTION public.get_certificate_by_hash(text) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.increment_rate_limit(text, int, int) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.ping() TO anon, authenticated;

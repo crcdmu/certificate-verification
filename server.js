@@ -18,6 +18,18 @@ for (const file of envFiles) {
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+app.disable('x-powered-by');
+
+// Security Headers Middleware (matching production standards)
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  res.setHeader('Referrer-Policy', 'no-referrer');
+  res.setHeader('Permissions-Policy', 'camera=(self), microphone=(), geolocation=()');
+  next();
+});
+
 app.use(express.json());
 
 // API Endpoints mounting
@@ -73,8 +85,17 @@ app.use((req, res, next) => {
   next();
 });
 
-// Serve static assets with clean URLs (e.g. /privacy -> privacy.html)
-app.use(express.static(__dirname, { extensions: ['html'] }));
+// Serve static assets with clean URLs (e.g. /privacy -> privacy.html) and deny hidden files
+app.use(express.static(__dirname, { extensions: ['html'], dotfiles: 'deny' }));
+
+// Global Error Handler (catches malformed JSON payloads and unexpected errors without stack trace leakage)
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError && 'body' in err) {
+    return res.status(400).json({ success: false, message: 'Invalid JSON payload.' });
+  }
+  console.error('[Server Error]', err);
+  return res.status(500).json({ success: false, message: 'Internal server error.' });
+});
 
 app.listen(PORT, () => {
   console.log(`\n🚀 Verification portal server running at http://localhost:${PORT}`);

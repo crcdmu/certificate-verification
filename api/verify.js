@@ -90,7 +90,7 @@ module.exports = async function handler(req, res) {
   const clientIp = 
     req.headers['x-vercel-forwarded-for']?.split(',')[0].trim() ||
     req.headers['x-real-ip'] ||
-    (req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',').pop().trim() : null) ||
+    (req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',')[0].trim() : null) ||
     req.socket?.remoteAddress ||
     '127.0.0.1';
   
