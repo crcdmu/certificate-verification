@@ -520,7 +520,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (verifyBtn) verifyBtn.disabled = true;
     if (btnText) {
-      btnText.textContent = isUrl ? 'Resolving QR Certificate...' : 'Querying University Records...';
+      btnText.textContent = isUrl ? 'Resolving QR Certificate...' : 'Querying Records...';
     }
     if (statusDisplay) statusDisplay.textContent = '';
 
@@ -542,7 +542,14 @@ document.addEventListener('DOMContentLoaded', () => {
         currentVerifiedId = finalId;
         const inputField = document.getElementById('cert-id-input');
         if (inputField) inputField.value = finalId;
-        renderVerificationSuccess(result.data, finalId);
+
+        // Keep URL in sync without triggering a reload (preserves bookmark & refresh integrity)
+        const expectedSearch = `?id=${encodeURIComponent(finalId)}`;
+        if (window.location.search !== expectedSearch) {
+          window.history.replaceState({ id: finalId }, document.title, `${window.location.pathname}${expectedSearch}`);
+        }
+
+        renderVerificationSuccess(result.data, finalId, result.qrSvg);
       } else {
         const searchSection = document.getElementById('search-section');
         const resultContainer = document.getElementById('resultContainer');
@@ -680,26 +687,25 @@ function initMobileHeroBlur() {
   updateHeroBlur();
 }
 
-// Mobile Auto-Scroll (Landing Page Only - triggers strictly after loading animation ends)
-function triggerMobileAutoScroll() {
+// Mobile Auto-Scroll (Landing Page - triggers after loading animation or clicking "Verify Another ID")
+function triggerMobileAutoScroll(force = false) {
   const urlParams = new URLSearchParams(window.location.search);
   
-  if (!urlParams.get('id') && window.innerWidth <= 1024) {
-    // Gentle 300ms pause so the user sees the landing page before smooth scrolling
+  if ((force || !urlParams.get('id')) && window.innerWidth <= 1024) {
+    // Pause so transition from verified view is visible before smooth scrolling
     setTimeout(() => {
-      // Only auto-scroll if user hasn't already scrolled manually
-      if (window.scrollY < 40) {
+      if (force || window.scrollY < 40) {
         const formSection = document.querySelector('.form-side');
         if (formSection && formSection.style.display !== 'none') {
           const targetY = formSection.getBoundingClientRect().top + window.scrollY;
-          smoothScrollTo(targetY, 1200);
+          smoothScrollTo(targetY, force ? 800 : 1200);
         }
       }
-    }, 300);
+    }, force ? 120 : 300);
   }
 }
 
-function renderVerificationSuccess(studentData, certId) {
+function renderVerificationSuccess(studentData, certId, qrSvg) {
   if (certId) currentVerifiedId = certId;
 
   document.body.classList.add('verified-view-active');
@@ -739,33 +745,30 @@ function renderVerificationSuccess(studentData, certId) {
     }
   }
 
-  // Dynamic Header & Badges depending on Valid vs Revoked / Inactive
+  // Dynamic Header depending on Valid vs Revoked / Inactive
   const headingElem = document.getElementById('status-heading');
   const descElem = document.getElementById('status-description');
-  const badgeText = document.getElementById('badge-status-text');
   const statusValidIcon = document.getElementById('status-valid-icon');
   const statusInvalidIcon = document.getElementById('status-invalid-icon');
-  const badgeValidIcon = document.getElementById('badge-valid-icon');
-  const badgeInvalidIcon = document.getElementById('badge-invalid-icon');
 
   if (isRecordValid) {
     document.body.classList.remove('status-invalid');
     if (headingElem) headingElem.textContent = 'Official Record Verified';
     if (descElem) descElem.innerHTML = 'This certificate is authentic and has been<br> issued by Dhanamanjuri University.';
-    if (badgeText) badgeText.textContent = 'This is an official record from the university database.';
     if (statusValidIcon) statusValidIcon.style.display = 'block';
     if (statusInvalidIcon) statusInvalidIcon.style.display = 'none';
-    if (badgeValidIcon) badgeValidIcon.style.display = 'block';
-    if (badgeInvalidIcon) badgeInvalidIcon.style.display = 'none';
   } else {
     document.body.classList.add('status-invalid');
     if (headingElem) headingElem.textContent = `Certificate Inactive (${rawStatus})`;
-    if (descElem) descElem.innerHTML = `Warning: This certificate credential is marked as <strong>${rawStatus}</strong> in university records.`;
-    if (badgeText) badgeText.textContent = `Database Alert: Credential status is recorded as ${rawStatus}.`;
+    if (descElem) {
+      descElem.textContent = 'Warning: This certificate credential is marked as ';
+      const statusStrong = document.createElement('strong');
+      statusStrong.textContent = rawStatus;
+      descElem.appendChild(statusStrong);
+      descElem.appendChild(document.createTextNode(' in university records.'));
+    }
     if (statusValidIcon) statusValidIcon.style.display = 'none';
     if (statusInvalidIcon) statusInvalidIcon.style.display = 'block';
-    if (badgeValidIcon) badgeValidIcon.style.display = 'none';
-    if (badgeInvalidIcon) badgeInvalidIcon.style.display = 'block';
   }
 
   const printTimeElem = document.getElementById('vd-print-time');
@@ -778,6 +781,28 @@ function renderVerificationSuccess(studentData, certId) {
       hour: '2-digit',
       minute: '2-digit'
     });
+  }
+
+  // Custom Verification QR Code for Official Print Statement
+  const printQrElem = document.getElementById('print-qr-code');
+  if (printQrElem) {
+    if (qrSvg) {
+      printQrElem.innerHTML = qrSvg;
+    } else if (window.QRCode && window.QRCode.toString) {
+      const verifyUrl = `https://verification-dmu.vercel.app/?id=${encodeURIComponent(currentVerifiedId)}`;
+      window.QRCode.toString(verifyUrl, {
+        type: 'svg',
+        margin: 0,
+        color: {
+          dark: '#091a36',
+          light: '#ffffff'
+        }
+      }).then(svg => {
+        printQrElem.innerHTML = svg;
+      }).catch(err => {
+        console.warn('Client QR render fallback notice:', err);
+      });
+    }
   }
 
   // Focus redirection for screen readers and keyboard navigation
@@ -872,6 +897,13 @@ function resetSearch() {
   const inputField = document.getElementById('cert-id-input');
   if (inputField) {
     inputField.value = '';
+  }
+
+  // In mobile, trigger smooth auto-scroll to the certificate search card
+  if (window.innerWidth <= 1024) {
+    window.scrollTo(0, 0);
+    triggerMobileAutoScroll(true);
+  } else if (inputField) {
     inputField.focus();
   }
 }
@@ -904,12 +936,19 @@ document.querySelectorAll('a.mailto-fallback').forEach(link => {
   });
 });
 
-// Back link logic: go back without reloading if possible
+// Back link logic: go back without reloading if possible (strict same-origin referrer check)
 document.querySelectorAll('a.back-link').forEach(link => {
   link.addEventListener('click', function(e) {
-    if (window.history.length > 1 && document.referrer.includes(window.location.host)) {
-      e.preventDefault();
-      window.history.back();
+    try {
+      if (window.history.length > 1 && document.referrer) {
+        const refUrl = new URL(document.referrer);
+        if (refUrl.origin === window.location.origin && refUrl.pathname === '/') {
+          e.preventDefault();
+          window.history.back();
+        }
+      }
+    } catch {
+      // Fallback to regular href navigation
     }
   });
 });

@@ -202,12 +202,7 @@
                 </div>
                 <h2 class="status-heading" id="status-heading" tabindex="-1">Official Record Verified</h2>
                 <p class="status-description" id="status-description">This certificate is authentic and has been<br> issued by Dhanamanjuri University.</p>
-                
-                <div class="database-badge" id="database-badge">
-                    <svg id="badge-valid-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="9 12 11 14 15 10"></polyline></svg>
-                    <svg id="badge-invalid-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" style="display: none;" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                    <span id="badge-status-text">This is an official record from the university database.</span>
-                </div>
+
             </section>
 
             <section class="details-panel">
@@ -276,12 +271,18 @@
                         </div>
                     </div>
 
-                    <!-- Print-Only Verification Notice & Metadata -->
+                    <!-- Print-Only Verification Notice & Metadata with Custom QR Code -->
                     <div class="print-footer-notice">
-                        <div class="print-meta-grid">
-                            <span><strong>Verification Date:</strong> <span id="vd-print-time"></span></span>
+                        <div class="print-footer-main">
+                            <div class="print-meta-grid">
+                                <span><strong>Verification Date:</strong> <span id="vd-print-time"></span></span>
+                            </div>
+                            <p class="print-disclaimer">This document serves as digital verification confirmation from the official university repository. Authenticity can be re-verified online at https://verification-dmu.vercel.app</p>
                         </div>
-                        <p class="print-disclaimer">This document serves as digital verification confirmation from the official university repository. Authenticity can be re-verified online at https://verification-dmu.vercel.app</p>
+                        <div class="print-qr-section">
+                            <div class="print-qr-frame" id="print-qr-code" aria-label="Certificate Verification QR Code"></div>
+                            <span class="print-qr-label">Scan to Verify</span>
+                        </div>
                     </div>
 
                     <div class="credential-actions">
@@ -368,6 +369,7 @@
         </div>
     </dialog>
 
+    <script src="qrcode.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

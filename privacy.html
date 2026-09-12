@@ -7,16 +7,15 @@
     <link rel="icon" type="image/png" href="fav_crc.png">
     <link rel="stylesheet" href="style.css">
     <style>
-        .legal-wrapper { flex: 1; overflow-y: auto; background-color: var(--bg-main); padding: 3rem 1.5rem; }
-        .legal-container { max-width: 720px; margin: 0 auto; background: var(--bg-card); padding: 3rem; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.03); border: 1px solid var(--border-color); }
-        .legal-container h1 { color: var(--brand-navy); font-size: 2rem; margin-bottom: 0.5rem; }
+        .legal-wrapper { flex: 1; width: 100%; overflow-y: auto; background-color: var(--bg-main); padding: clamp(2rem, 5%, 3.5rem) clamp(3%, 5%, 6%); box-sizing: border-box; }
+        .legal-container { width: 100%; max-width: min(92%, 760px); margin: 0 auto; background: var(--bg-card); padding: clamp(1.5rem, 5%, 3rem); border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.03); border: 1px solid var(--border-color); box-sizing: border-box; }
+        .legal-container h1 { color: var(--brand-navy); font-size: clamp(1.5rem, 4vw, 2rem); margin-bottom: 0.5rem; }
         .legal-container .last-updated { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 2rem; display: block; }
-        .legal-container h2 { color: var(--brand-navy); font-size: 1.25rem; margin: 2rem 0 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; }
+        .legal-container h2 { color: var(--brand-navy); font-size: clamp(1.1rem, 3vw, 1.25rem); margin: 2rem 0 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; }
         .legal-container p, .legal-container li { color: var(--text-dark); line-height: 1.6; font-size: 0.95rem; margin-bottom: 1rem; }
         .legal-container ul { margin-bottom: 1.5rem; padding-left: 1.5rem; }
         .back-link { display: flex; align-items: center; gap: 8px; color: var(--brand-blue); text-decoration: none; font-weight: 600; font-size: 0.9rem; }
         .back-link:hover { text-decoration: underline; }
-        @media (max-width: 600px) { .legal-container { padding: 1.5rem; } }
     </style>
 </head>
 <body>

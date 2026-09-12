@@ -58,19 +58,46 @@ function isSafeExternalUrl(rawUrl) {
   try {
     const parsed = new URL(rawUrl);
     if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false;
-    const hostname = parsed.hostname.toLowerCase();
+    
+    // Only allow standard web ports
+    if (parsed.port && parsed.port !== '80' && parsed.port !== '443') return false;
+
+    // Normalize hostname: lowercase and strip IPv6 bracket notation if present
+    let hostname = parsed.hostname.toLowerCase();
+    if (hostname.startsWith('[') && hostname.endsWith(']')) {
+      hostname = hostname.slice(1, -1);
+    }
+
+    // Check for loopback, local, and unspecified hostnames
     if (
       hostname === 'localhost' ||
       hostname.endsWith('.localhost') ||
       hostname === '127.0.0.1' ||
+      hostname === '0.0.0.0' ||
       hostname === '::1' ||
-      /^10\./.test(hostname) ||
-      /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(hostname) ||
-      /^192\.168\./.test(hostname) ||
-      /^169\.254\./.test(hostname)
+      hostname === '::' ||
+      hostname.startsWith('::ffff:')
     ) {
       return false;
     }
+
+    // Block IPv4 private ranges and link-local (10.x, 172.16-31.x, 192.168.x, 169.254.x, 127.x, 0.x)
+    if (
+      /^10\./.test(hostname) ||
+      /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(hostname) ||
+      /^192\.168\./.test(hostname) ||
+      /^169\.254\./.test(hostname) ||
+      /^127\./.test(hostname) ||
+      /^0\./.test(hostname)
+    ) {
+      return false;
+    }
+
+    // Block IPv6 unique local (fc00::/7) and link-local (fe80::/10)
+    if (/^f[cd][0-9a-f]{2}:/i.test(hostname) || /^fe80:/i.test(hostname)) {
+      return false;
+    }
+
     return true;
   } catch {
     return false;
@@ -78,42 +105,86 @@ function isSafeExternalUrl(rawUrl) {
 }
 
 // Resolver for dynamic/redirect QR URLs (e.g. q.me-qr.com, bit.ly, etc.)
+// Uses manual redirect handling, per-hop SSRF validation, and size-bounded body reading.
 async function resolveRedirectQrUrl(rawUrl) {
   const directMatch = rawUrl.match(CERT_ID_REGEX) || rawUrl.match(/CRC-\d{8}-[A-Z0-9]{3,5}/i);
   if (directMatch) return directMatch[0].toUpperCase();
 
-  if (!isSafeExternalUrl(rawUrl)) return null;
+  let currentUrl = rawUrl;
+  const MAX_HOPS = 3;
 
-  try {
-    const response = await fetch(rawUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
-      },
-      redirect: 'follow',
-      signal: AbortSignal.timeout(5000)
-    });
+  for (let hop = 0; hop < MAX_HOPS; hop++) {
+    if (!isSafeExternalUrl(currentUrl)) return null;
 
-    if (response.url) {
-      const finalMatch = response.url.match(/CRC-\d{8}-[A-Z0-9]{3,5}/i);
-      if (finalMatch) return finalMatch[0].toUpperCase();
+    try {
+      const response = await fetch(currentUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+        },
+        redirect: 'manual',
+        signal: AbortSignal.timeout(5000)
+      });
+
+      // Check if redirect response (301, 302, 303, 307, 308)
+      if ([301, 302, 303, 307, 308].includes(response.status)) {
+        const location = response.headers.get('location');
+        if (!location) return null;
+
+        // Check if redirect target URL directly contains the certificate ID
+        const locMatch = location.match(/CRC-\d{8}-[A-Z0-9]{3,5}/i);
+        if (locMatch) return locMatch[0].toUpperCase();
+
+        // Resolve relative or absolute URL against current URL
+        try {
+          const nextUrl = new URL(location, currentUrl).href;
+          currentUrl = nextUrl;
+          continue;
+        } catch {
+          return null;
+        }
+      }
+
+      if (response.ok) {
+        // Enforce max 64KB content size to prevent memory exhaustion
+        const reader = response.body?.getReader();
+        if (!reader) {
+          const text = await response.text();
+          const match = text.slice(0, 65536).match(/CRC-\d{8}-[A-Z0-9]{3,5}/i);
+          return match ? match[0].toUpperCase() : null;
+        }
+
+        let totalBytes = 0;
+        const decoder = new TextDecoder();
+        let textContent = '';
+
+        while (totalBytes < 65536) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          totalBytes += value.length;
+          textContent += decoder.decode(value, { stream: true });
+          const streamMatch = textContent.match(/CRC-\d{8}-[A-Z0-9]{3,5}/i);
+          if (streamMatch) {
+            reader.cancel();
+            return streamMatch[0].toUpperCase();
+          }
+        }
+        reader.cancel();
+        return null;
+      }
+      break;
+    } catch (err) {
+      console.warn('[QR Resolver] Redirect resolution note:', err.message);
+      break;
     }
-
-    const html = await response.text();
-    const htmlMatch = html.match(/CRC-\d{8}-[A-Z0-9]{3,5}/i);
-    if (htmlMatch) {
-      return htmlMatch[0].toUpperCase();
-    }
-  } catch (err) {
-    console.warn('[QR Resolver] Redirect resolution note:', err.message);
   }
   return null;
 }
 
 // Hash Generation (PBKDF2-SHA-256 with 100,000 iterations)
-async function generateHash(certificateId) {
+async function generateHash(certificateId, secret) {
   return new Promise((resolve, reject) => {
-    crypto.pbkdf2(certificateId, SECRET_KEY, 100000, 32, 'sha256', (err, derivedKey) => {
+    crypto.pbkdf2(certificateId, secret, 100000, 32, 'sha256', (err, derivedKey) => {
       if (err) return reject(err);
       resolve(derivedKey.toString('hex'));
     });
@@ -132,7 +203,8 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ success: false, message: 'Method Not Allowed.' });
   }
 
-  if (!SECRET_KEY || SECRET_KEY.length < 32) {
+  const effectiveSecret = process.env.SECRET_SALT || process.env.SECRET_KEY || SECRET_KEY;
+  if (!effectiveSecret || effectiveSecret.length < 32) {
     console.error('SECRET_KEY missing or too short');
     return res.status(500).json({ success: false, message: 'Service temporarily unavailable.' });
   }
@@ -143,13 +215,17 @@ module.exports = async function handler(req, res) {
     return res.status(500).json({ success: false, message: 'Database service configuration error.' });
   }
 
-  // Reliable IP extraction (prioritizing Vercel Edge headers)
-  const clientIp = 
+  // Reliable IP extraction (prioritizing Vercel Edge headers and Express trust proxy)
+  const rawIp = 
     req.headers['x-vercel-forwarded-for']?.split(',')[0].trim() ||
+    req.ip ||
     req.headers['x-real-ip'] ||
     (req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',')[0].trim() : null) ||
     req.socket?.remoteAddress ||
     '127.0.0.1';
+  
+  // Sanitize IP format (IPv4 or IPv6, alphanumeric and colon/dot, max 45 chars)
+  const clientIp = /^[a-fA-F0-9:.]+$/.test(rawIp) && rawIp.length <= 45 ? rawIp : '127.0.0.1';
   
   // Rate Limiting (Using Supabase RPC Function)
   const { data: limitData, error: limitError } = await supabase.rpc('increment_rate_limit', { 
@@ -196,7 +272,7 @@ module.exports = async function handler(req, res) {
 
   let candidateHash;
   try {
-    candidateHash = await generateHash(validation.cleanId);
+    candidateHash = await generateHash(validation.cleanId, effectiveSecret);
   } catch (err) {
     console.error('Hash generation error:', err);
     return res.status(500).json({ success: false, message: 'Verification error.' });
@@ -247,5 +323,27 @@ module.exports = async function handler(req, res) {
     status: row.status,
   };
 
-  return res.status(200).json({ success: true, data: studentData, cleanId: validation.cleanId });
+  let qrSvg = null;
+  try {
+    const QRCode = require('qrcode');
+    const verifyUrl = `https://verification-dmu.vercel.app/?id=${encodeURIComponent(validation.cleanId)}`;
+    qrSvg = await QRCode.toString(verifyUrl, {
+      type: 'svg',
+      margin: 0,
+      color: {
+        dark: '#091a36',
+        light: '#ffffff'
+      }
+    });
+  } catch (qrErr) {
+    console.warn('[QR Generator] Error generating QR SVG:', qrErr.message);
+  }
+
+  return res.status(200).json({ 
+    success: true, 
+    data: studentData, 
+    cleanId: validation.cleanId,
+    qrSvg 
+  });
 };
+

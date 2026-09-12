@@ -74,12 +74,34 @@ BEGIN
     -- Opportunistic cleanup: purge stale IP records older than 1 hour to prevent table bloat
     DELETE FROM public.rate_limits WHERE first_request < (now_ts - INTERVAL '1 hour');
 
-    SELECT * INTO rec FROM public.rate_limits WHERE ip = client_ip;
+    -- Atomic row lock to serialize concurrent queries for the same client_ip
+    SELECT * INTO rec FROM public.rate_limits WHERE ip = client_ip FOR UPDATE;
 
     IF rec IS NULL THEN
         INSERT INTO public.rate_limits (ip, count, first_request)
-        VALUES (client_ip, 1, now_ts);
-        RETURN json_build_object('allowed', true, 'remaining', max_reqs - 1);
+        VALUES (client_ip, 1, now_ts)
+        ON CONFLICT (ip) DO UPDATE
+        SET count = public.rate_limits.count + 1
+        RETURNING * INTO rec;
+
+        IF rec.count > 1 THEN
+            -- Row was concurrently inserted; evaluate against existing count
+            time_diff := now_ts - rec.first_request;
+            IF time_diff > (window_seconds || ' seconds')::INTERVAL THEN
+                UPDATE public.rate_limits 
+                SET count = 1, first_request = now_ts 
+                WHERE ip = client_ip;
+                RETURN json_build_object('allowed', true, 'remaining', max_reqs - 1);
+            ELSE
+                IF rec.count > max_reqs THEN
+                    RETURN json_build_object('allowed', false, 'remaining', 0);
+                ELSE
+                    RETURN json_build_object('allowed', true, 'remaining', max_reqs - rec.count);
+                END IF;
+            END IF;
+        ELSE
+            RETURN json_build_object('allowed', true, 'remaining', max_reqs - 1);
+        END IF;
     ELSE
         time_diff := now_ts - rec.first_request;
         IF time_diff > (window_seconds || ' seconds')::INTERVAL THEN

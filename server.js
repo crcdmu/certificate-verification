@@ -27,6 +27,7 @@ app.use((req, res, next) => {
   res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   res.setHeader('Referrer-Policy', 'no-referrer');
   res.setHeader('Permissions-Policy', 'camera=(self), microphone=(), geolocation=()');
+  res.setHeader('Content-Security-Policy', "default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; form-action 'self'; frame-ancestors 'none';");
   next();
 });
 
@@ -70,14 +71,16 @@ if (hasSupabaseCreds) {
 
 app.set('trust proxy', 1);
 
-// Security Guard: Prevent serving raw backend files, environment files, or scripts
+// Security Guard: Prevent serving raw backend files, node_modules, environment files, or scripts
 app.use((req, res, next) => {
-  const cleanPath = (req.path || '').toLowerCase();
+  const cleanPath = (req.path || '').toLowerCase().replace(/[\/\\]+/g, '/');
   const blockedExact = ['/server.js', '/package.json', '/package-lock.json', '/readme.md', '/schema.sql'];
   
   if (
     blockedExact.includes(cleanPath) ||
     cleanPath.startsWith('/api/') ||
+    cleanPath.startsWith('/node_modules') ||
+    cleanPath.includes('/.') ||
     cleanPath.includes('.env')
   ) {
     return res.status(403).type('text/plain').send('Access denied');
