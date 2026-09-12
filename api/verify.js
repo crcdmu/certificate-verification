@@ -53,6 +53,63 @@ function validateCertificateId(certificateId) {
   return { valid: true, cleanId };
 }
 
+// SSRF Guard: prevent querying internal/private networks
+function isSafeExternalUrl(rawUrl) {
+  try {
+    const parsed = new URL(rawUrl);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false;
+    const hostname = parsed.hostname.toLowerCase();
+    if (
+      hostname === 'localhost' ||
+      hostname.endsWith('.localhost') ||
+      hostname === '127.0.0.1' ||
+      hostname === '::1' ||
+      /^10\./.test(hostname) ||
+      /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(hostname) ||
+      /^192\.168\./.test(hostname) ||
+      /^169\.254\./.test(hostname)
+    ) {
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Resolver for dynamic/redirect QR URLs (e.g. q.me-qr.com, bit.ly, etc.)
+async function resolveRedirectQrUrl(rawUrl) {
+  const directMatch = rawUrl.match(CERT_ID_REGEX) || rawUrl.match(/CRC-\d{8}-[A-Z0-9]{3,5}/i);
+  if (directMatch) return directMatch[0].toUpperCase();
+
+  if (!isSafeExternalUrl(rawUrl)) return null;
+
+  try {
+    const response = await fetch(rawUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+      },
+      redirect: 'follow',
+      signal: AbortSignal.timeout(5000)
+    });
+
+    if (response.url) {
+      const finalMatch = response.url.match(/CRC-\d{8}-[A-Z0-9]{3,5}/i);
+      if (finalMatch) return finalMatch[0].toUpperCase();
+    }
+
+    const html = await response.text();
+    const htmlMatch = html.match(/CRC-\d{8}-[A-Z0-9]{3,5}/i);
+    if (htmlMatch) {
+      return htmlMatch[0].toUpperCase();
+    }
+  } catch (err) {
+    console.warn('[QR Resolver] Redirect resolution note:', err.message);
+  }
+  return null;
+}
+
 // Hash Generation (PBKDF2-SHA-256 with 100,000 iterations)
 async function generateHash(certificateId) {
   return new Promise((resolve, reject) => {
@@ -123,7 +180,16 @@ module.exports = async function handler(req, res) {
   }
 
   const { certificateId } = body;
-  const validation = validateCertificateId(certificateId);
+  let validation = validateCertificateId(certificateId);
+
+  // If initial regex validation failed, check if certificateId is a QR link / redirect URL (e.g. q.me-qr.com)
+  if (!validation.valid && typeof certificateId === 'string' && /^https?:\/\//i.test(certificateId.trim())) {
+    const resolvedId = await resolveRedirectQrUrl(certificateId.trim());
+    if (resolvedId) {
+      validation = validateCertificateId(resolvedId);
+    }
+  }
+
   if (!validation.valid) {
     return res.status(400).json({ success: false, message: validation.message });
   }

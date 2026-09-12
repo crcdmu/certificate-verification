@@ -309,6 +309,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function formatCertificateInput(val) {
     if (!val) return '';
+    const trimmed = val.trim();
+    if (/^https?:\/\//i.test(trimmed)) {
+      return trimmed;
+    }
     const clean = val.toUpperCase().replace(/[^A-Z0-9]/g, '');
     if (clean.startsWith('CRC')) {
       const rest = clean.slice(3);
@@ -374,11 +378,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const match = certId.match(/CRC-\d{8}-[A-Z0-9]{3,5}/i);
     if (match) {
       certId = match[0].toUpperCase();
+      showToast(`QR Code Scanned: ${certId}`);
+    } else if (/^https?:\/\//i.test(certId)) {
+      showToast('Resolving Dynamic QR Link...');
     }
 
     const input = document.getElementById('cert-id-input');
     if (input) input.value = certId;
-    showToast(`QR Code Scanned: ${certId}`);
     runVerification(certId);
   };
 
@@ -504,15 +510,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Reusable Verification Logic
   async function runVerification(candidateId) {
-    const cleanId = candidateId.trim().toUpperCase();
+    const rawInput = (candidateId || '').trim();
+    const isUrl = /^https?:\/\//i.test(rawInput);
+    const cleanId = isUrl ? rawInput : rawInput.toUpperCase();
     currentVerifiedId = cleanId;
 
     const verifyBtn = document.getElementById('verify-btn');
     const btnText = document.getElementById('btn-text');
-    const loadingOverlay = document.getElementById('loading-overlay');
 
     if (verifyBtn) verifyBtn.disabled = true;
-    if (btnText) btnText.textContent = 'Querying University Records...';
+    if (btnText) {
+      btnText.textContent = isUrl ? 'Resolving QR Certificate...' : 'Querying University Records...';
+    }
     if (statusDisplay) statusDisplay.textContent = '';
 
     try {
@@ -529,13 +538,17 @@ document.addEventListener('DOMContentLoaded', () => {
       const result = await response.json();
 
       if (result.success && result.data) {
-        renderVerificationSuccess(result.data, cleanId);
+        const finalId = result.cleanId || cleanId;
+        currentVerifiedId = finalId;
+        const inputField = document.getElementById('cert-id-input');
+        if (inputField) inputField.value = finalId;
+        renderVerificationSuccess(result.data, finalId);
       } else {
         const searchSection = document.getElementById('search-section');
         const resultContainer = document.getElementById('resultContainer');
         if (searchSection) searchSection.style.display = 'none';
         if (resultContainer) resultContainer.style.display = 'block';
-        renderRecordNotFound(cleanId, result.message);
+        renderRecordNotFound(result.cleanId || cleanId, result.message);
       }
     } catch (err) {
       console.error("Verification Request Failed:", err);
