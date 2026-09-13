@@ -11,8 +11,26 @@ document.addEventListener('DOMContentLoaded', () => {
   const verifyForm = document.getElementById('verify-form');
   const statusDisplay = document.getElementById('status-message');
 
-  // Guard: If this is not a verification page (e.g. privacy.html or terms.html), exit early
+  // Mark session as initialized from verification app
+  try {
+    sessionStorage.setItem('app_initialized', 'true');
+  } catch (e) {}
+
+  // Guard: If this is not a verification page (e.g. standalone privacy.html or terms.html), wire up back link and exit early
   if (!verifyForm) {
+    const standaloneBackLink = document.querySelector('.back-link');
+    if (standaloneBackLink) {
+      standaloneBackLink.addEventListener('click', (e) => {
+        if (window.history.length > 1 && sessionStorage.getItem('app_initialized')) {
+          e.preventDefault();
+          window.history.back();
+        } else {
+          try {
+            sessionStorage.setItem('skip_preloader', 'true');
+          } catch (err) {}
+        }
+      });
+    }
     return;
   }
 
@@ -218,10 +236,27 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   };
 
+  const isPreloaderSkipped = () => {
+    try {
+      return sessionStorage.getItem('skip_preloader') === 'true' || sessionStorage.getItem('preloader_shown') === 'true';
+    } catch (e) {
+      return false;
+    }
+  };
+
   // Preloader animation with Fluid Glass Noise Shader Reveal
   const initPreloader = () => {
     const loader = document.getElementById('loader') || document.getElementById('loading-overlay');
     if (!loader) {
+      triggerMobileAutoScroll();
+      return;
+    }
+
+    if (isPreloaderSkipped()) {
+      loader.classList.add('hide');
+      loader.style.display = 'none';
+      const pageWrapper = document.querySelector('.page-wrapper');
+      if (pageWrapper) pageWrapper.classList.add('transition-active');
       triggerMobileAutoScroll();
       return;
     }
@@ -241,6 +276,9 @@ document.addEventListener('DOMContentLoaded', () => {
           loader.classList.add('hide');
           setTimeout(() => {
             loader.style.display = 'none';
+            try {
+              sessionStorage.setItem('preloader_shown', 'true');
+            } catch (e) {}
             triggerMobileAutoScroll();
           }, 250);
         });
@@ -249,14 +287,26 @@ document.addEventListener('DOMContentLoaded', () => {
         loader.classList.add('hide');
         setTimeout(() => {
           loader.style.display = 'none';
+          try {
+            sessionStorage.setItem('preloader_shown', 'true');
+          } catch (e) {}
           triggerMobileAutoScroll();
         }, 400);
       }
     }, 3900);
   };
 
+  window.addEventListener('pageshow', (event) => {
+    const loader = document.getElementById('loader') || document.getElementById('loading-overlay');
+    if (loader && (event.persisted || isPreloaderSkipped())) {
+      loader.classList.add('hide');
+      loader.style.display = 'none';
+    }
+  });
+
   initPreloader();
   initMobileHeroBlur();
+  initLegalRouter();
 
   // Wire up the static "Verify Another ID" button (CSP-safe, no inline onclick)
   const verifyAnotherBtn = document.getElementById('verify-another-btn');
@@ -936,19 +986,195 @@ document.querySelectorAll('a.mailto-fallback').forEach(link => {
   });
 });
 
-// Back link logic: go back without reloading if possible (strict same-origin referrer check)
-document.querySelectorAll('a.back-link').forEach(link => {
-  link.addEventListener('click', function(e) {
-    try {
-      if (window.history.length > 1 && document.referrer) {
-        const refUrl = new URL(document.referrer);
-        if (refUrl.origin === window.location.origin && refUrl.pathname === '/') {
-          e.preventDefault();
-          window.history.back();
-        }
+// Legal Pages Configuration (Client-side view without reloading)
+const LEGAL_PAGES = {
+  privacy: {
+    title: 'Privacy Policy | CR&PC Verification',
+    html: `
+      <h1>Privacy Policy</h1>
+      <span class="last-updated">Last Updated: June 2026</span>
+
+      <p>The Campus Recruitment &amp; Placement Cell (CR&amp;PC) respects your privacy. This policy outlines how we handle data within our Certificate Verification Portal.</p>
+
+      <h2>1. Zero-Knowledge Data Architecture</h2>
+      <p>To ensure maximum security and student privacy, this system utilizes a strict zero-knowledge archive architecture. The backend database <strong>does not expose or store plain-text certificate details</strong> to the public internet.</p>
+      <p>Instead, queried IDs are cryptographically hashed on the server using PBKDF2 with a secret salt to safely locate matches. This prevents any reverse-engineering of student data.</p>
+
+      <h2>2. Information Collection &amp; Retention</h2>
+      <p>We believe in data minimization. When you use this portal to verify a certificate:</p>
+      <ul>
+          <li><strong>No Query Logging:</strong> Queried certificate IDs are processed strictly in real-time memory to return validation results and are never saved, logged, or recorded permanently on the server.</li>
+          <li><strong>No Tracking Cookies:</strong> We do not use third-party tracking cookies or analytics platforms to monitor your behavior.</li>
+      </ul>
+
+      <h2>3. Security &amp; Anti-Abuse Measures</h2>
+      <p>To protect the system against enumeration attacks, we monitor client IP addresses. However, this is done with utmost respect for privacy:</p>
+      <ul>
+          <li>Client IP addresses are temporarily logged into a highly secure, distributed key-value store.</li>
+          <li>This data is used solely to enforce our anti-abuse rate limits (a maximum of 10 requests per minute).</li>
+          <li>The IP data is instantly and automatically discarded after the rolling window expires.</li>
+      </ul>
+      <h2>4. Third-Party Sharing</h2>
+      <p>We do not sell, trade, or otherwise transfer any data to outside parties. The verification results are provided strictly to the user initiating the query.</p>
+
+      <h2>5. Contact Information</h2>
+      <p>If you have any questions regarding this privacy policy or require official verification assistance, please contact the University Placement Cell.</p>
+    `
+  },
+  terms: {
+    title: 'Terms of Use | CR&PC Verification',
+    html: `
+      <h1>Terms of Use</h1>
+      <span class="last-updated">Last Updated: June 2026</span>
+
+      <div class="disclaimer-box">
+          <p><strong>Important Disclaimer:</strong> This Certificate Verification Portal is an independent web application developed specifically as a temporary verification infrastructure for the Campus Recruitment &amp; Placement Cell (CR&amp;PC). It is not officially hosted, maintained, or directly affiliated with the central administration of Dhanamanjuri University.</p>
+      </div>
+
+      <h2>1. Acceptance of Terms</h2>
+      <p>By accessing and using this verification portal, you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to abide by these terms, please do not use this service.</p>
+
+      <h2>2. Purpose and Accuracy</h2>
+      <p>This system is provided exclusively for verifying the authenticity of placement-related credentials issued by the CR&amp;PC. While every effort is made to ensure the accuracy of the cryptographic ledger, this portal does not serve as a replacement for formal, legally binding academic transcripts. For official academic records, users must contact the Dhanamanjuri University Examination Cell directly.</p>
+
+      <h2>3. Permitted Use</h2>
+      <p>You are granted a limited, non-exclusive license to use this portal solely for:</p>
+      <ul>
+          <li>Background checks by verified recruiters and employers.</li>
+          <li>Credential validation by institutional stakeholders.</li>
+          <li>Self-verification by Dhanamanjuri University students.</li>
+      </ul>
+
+      <h2>4. Prohibited Conduct &amp; Anti-Abuse</h2>
+      <p>To protect the integrity of the data, the following activities are strictly prohibited:</p>
+      <ul>
+          <li>Automated querying, data scraping, or the use of bots to extract information.</li>
+          <li>Certificate ID enumeration attacks (guessing IDs systematically).</li>
+          <li>Attempting to bypass the security headers or rate-limiting infrastructure.</li>
+      </ul>
+      <p><strong>Note:</strong> The system actively enforces rate limiting. Exceeding the standard request threshold will result in automated, permanent IP blocks.</p>
+
+      <h2>5. Limitation of Liability</h2>
+      <p>Under no circumstances shall the developers or the CR&amp;PC be liable for any direct, indirect, incidental, or consequential damages resulting from the use or inability to use this verification service or the data provided herein.</p>
+    `
+  }
+};
+
+let previousVerificationState = null;
+
+function showLegalView(pageName, pushToHistory = true) {
+  const pageData = LEGAL_PAGES[pageName];
+  if (!pageData) return;
+
+  const landingView = document.getElementById('landing-view');
+  const verifiedView = document.getElementById('verified-view');
+  const legalView = document.getElementById('legal-view');
+  const legalContent = document.getElementById('legal-content');
+  const headerBadge = document.getElementById('header-badge');
+  const legalBackBtn = document.getElementById('legal-back-btn');
+
+  // Save previous state if not already in a legal view
+  if (!previousVerificationState) {
+    const isVerifiedActive = verifiedView && (verifiedView.style.display === 'flex' || verifiedView.style.display === 'block');
+    previousVerificationState = {
+      isVerified: isVerifiedActive,
+      verifiedId: currentVerifiedId,
+      scrollY: window.scrollY || window.pageYOffset || 0
+    };
+  }
+
+  if (legalContent) legalContent.innerHTML = pageData.html;
+  if (landingView) landingView.style.display = 'none';
+  if (verifiedView) verifiedView.style.display = 'none';
+  if (headerBadge) headerBadge.style.display = 'none';
+  if (legalBackBtn) legalBackBtn.style.display = 'inline-flex';
+  if (legalView) legalView.style.display = 'block';
+
+  document.title = pageData.title;
+
+  if (pushToHistory) {
+    history.pushState({ legalPage: pageName }, pageData.title, `/${pageName}`);
+  }
+
+  window.scrollTo(0, 0);
+}
+
+function closeLegalView(fromPopState = false) {
+  const landingView = document.getElementById('landing-view');
+  const verifiedView = document.getElementById('verified-view');
+  const legalView = document.getElementById('legal-view');
+  const headerBadge = document.getElementById('header-badge');
+  const legalBackBtn = document.getElementById('legal-back-btn');
+
+  if (legalView) legalView.style.display = 'none';
+  if (legalBackBtn) legalBackBtn.style.display = 'none';
+  if (headerBadge) headerBadge.style.display = '';
+
+  const wasVerified = previousVerificationState && previousVerificationState.isVerified;
+  if (wasVerified && verifiedView) {
+    verifiedView.style.display = 'flex';
+    document.body.classList.add('verified-view-active');
+  } else if (landingView) {
+    landingView.style.display = '';
+    document.body.classList.remove('verified-view-active');
+  }
+
+  document.title = 'Certificate Verification | CR&PC, Dhanamanjuri University';
+
+  if (!fromPopState) {
+    const returnUrl = wasVerified && previousVerificationState.verifiedId
+      ? `/?id=${encodeURIComponent(previousVerificationState.verifiedId)}`
+      : '/';
+    history.pushState(null, '', returnUrl);
+  }
+
+  const scrollY = (previousVerificationState && previousVerificationState.scrollY) || 0;
+  window.scrollTo(0, scrollY);
+  previousVerificationState = null;
+}
+
+function initLegalRouter() {
+  // Handle PopState for back/forward browser navigation without reload
+  window.addEventListener('popstate', (e) => {
+    const state = e.state;
+    if (state && state.legalPage) {
+      showLegalView(state.legalPage, false);
+    } else {
+      const legalView = document.getElementById('legal-view');
+      if (legalView && legalView.style.display !== 'none') {
+        closeLegalView(true);
       }
-    } catch {
-      // Fallback to regular href navigation
     }
   });
-});
+
+  // Handle header back button in legal view
+  const legalBackBtn = document.getElementById('legal-back-btn');
+  if (legalBackBtn) {
+    legalBackBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (history.state && history.state.legalPage) {
+        history.back();
+      } else {
+        closeLegalView(false);
+      }
+    });
+  }
+
+  // Intercept all links to /privacy and /terms across the page
+  document.querySelectorAll('a[href="/privacy"], a[href="privacy.html"], a[href="/terms"], a[href="terms.html"]').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const href = link.getAttribute('href');
+      const pageName = href.includes('terms') ? 'terms' : 'privacy';
+      showLegalView(pageName, true);
+    });
+  });
+
+  // Check initial URL pathname
+  const initialPath = window.location.pathname.toLowerCase();
+  if (initialPath.includes('privacy')) {
+    showLegalView('privacy', false);
+  } else if (initialPath.includes('terms')) {
+    showLegalView('terms', false);
+  }
+}

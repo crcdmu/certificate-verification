@@ -75,13 +75,18 @@
                     <small>Learn, Labour and Serve</small>
                 </div>
             </div>
-            <div class="header-badge">
+            <div class="header-badge" id="header-badge">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="9 12 11 14 15 10"></polyline></svg>
                 <div class="badge-text">
                     <strong>CR&PC Records</strong>
                     <span>Officially Verified</span>
                 </div>
             </div>
+            <a href="/" class="back-link" id="legal-back-btn" style="display: none;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                <span class="back-text-full">Back to Verification</span>
+                <span class="back-text-short">Back</span>
+            </a>
         </header>
 
         <main class="split-container" id="landing-view">
@@ -302,6 +307,10 @@
                     </button>
                 </div>
             </section>
+        </main>
+
+        <main class="legal-wrapper" id="legal-view" style="display: none;" aria-label="Legal Information">
+            <div class="legal-container" id="legal-content"></div>
         </main>
 
         <footer class="site-footer">

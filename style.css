@@ -591,6 +591,70 @@ a.help-box p { font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; }
   box-sizing: border-box;
 }
 
+.legal-container h1 {
+  color: var(--brand-navy);
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  margin-bottom: 0.5rem;
+}
+
+.legal-container .last-updated {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin-bottom: 2rem;
+  display: block;
+}
+
+.legal-container h2 {
+  color: var(--brand-navy);
+  font-size: clamp(1.1rem, 3vw, 1.25rem);
+  margin: 2rem 0 1rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.5rem;
+}
+
+.legal-container p,
+.legal-container li {
+  color: var(--text-dark);
+  line-height: 1.6;
+  font-size: 0.95rem;
+  margin-bottom: 1rem;
+}
+
+.legal-container ul {
+  margin-bottom: 1.5rem;
+  padding-left: 1.5rem;
+}
+
+.disclaimer-box {
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+  padding: clamp(1rem, 3%, 1.5rem);
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  box-sizing: border-box;
+}
+
+.disclaimer-box p {
+  color: #9f1239;
+  margin: 0;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.back-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--brand-blue);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
 /* Responsive */
 
 /* Desktop Verified View Layout (No Scroll, Card Shifted Up) */
@@ -1018,7 +1082,15 @@ a.help-box p { font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; }
     text-overflow: ellipsis;
   }
   .brand-text small {
-    display: none;
+    display: block;
+    font-size: clamp(0.62rem, 2vw, 0.7rem);
+    line-height: 1.25;
+    color: var(--brand-blue);
+    margin-top: 2px;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .header-badge { display: none; }
 
@@ -1753,6 +1825,26 @@ body.status-invalid .data-card-header svg {
       background: #0b1120;
       border-color: #1e293b;
       box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+    }
+  }
+
+  .disclaimer-box {
+    background: rgba(244, 63, 94, 0.12);
+    border-color: rgba(244, 63, 94, 0.3);
+  }
+
+  .disclaimer-box p {
+    color: #fda4af;
+  }
+
+  .back-link {
+    color: #38bdf8;
+  }
+
+  @media screen and (max-width: 600px) {
+    .back-link {
+      background: #1e293b;
+      color: #38bdf8;
     }
   }
 }
