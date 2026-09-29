@@ -304,6 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  initTheme();
   initPreloader();
   initMobileHeroBlur();
   initLegalRouter();
@@ -1177,4 +1178,83 @@ function initLegalRouter() {
   } else if (initialPath.includes('terms')) {
     showLegalView('terms', false);
   }
+}
+
+// ==========================================================================
+// Theme Management (Dark / Light Mode Manual Toggle & Auto Sync)
+// ==========================================================================
+function initTheme() {
+  const getPreferredTheme = () => {
+    try {
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme === 'dark' || savedTheme === 'light') {
+        return savedTheme;
+      }
+    } catch (e) {}
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+      ? 'dark'
+      : 'light';
+  };
+
+  const applyTheme = (theme, save = true) => {
+    document.documentElement.setAttribute('data-theme', theme);
+    if (save) {
+      try {
+        localStorage.setItem('theme', theme);
+      } catch (e) {}
+    }
+    updateToggleButtons(theme);
+  };
+
+  const updateToggleButtons = (theme) => {
+    const isDark = theme === 'dark';
+    const buttons = document.querySelectorAll('.theme-toggle-btn');
+    buttons.forEach((btn) => {
+      btn.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+      btn.setAttribute('title', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+      btn.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+    });
+  };
+
+  const toggleTheme = () => {
+    const currentTheme = document.documentElement.getAttribute('data-theme') || getPreferredTheme();
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    applyTheme(newTheme, true);
+  };
+
+  // Bind click handlers to all theme toggle buttons on page
+  document.querySelectorAll('.theme-toggle-btn').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      toggleTheme();
+    });
+  });
+
+  // Listen to OS preference changes if no manual override is stored
+  if (window.matchMedia) {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleSystemThemeChange = (e) => {
+      try {
+        if (!localStorage.getItem('theme')) {
+          applyTheme(e.matches ? 'dark' : 'light', false);
+        }
+      } catch (err) {}
+    };
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', handleSystemThemeChange);
+    } else if (mediaQuery.addListener) {
+      mediaQuery.addListener(handleSystemThemeChange);
+    }
+  }
+
+  // Cross-tab synchronization
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'theme' && (e.newValue === 'dark' || e.newValue === 'light')) {
+      applyTheme(e.newValue, false);
+    }
+  });
+
+  // Apply current theme on load
+  const initialTheme = document.documentElement.getAttribute('data-theme') || getPreferredTheme();
+  applyTheme(initialTheme, false);
 }
