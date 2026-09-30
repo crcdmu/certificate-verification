@@ -76,6 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
       uniform vec2 u_resolution;
       uniform float u_progress;
       uniform float u_time;
+      uniform float u_is_dark;
       varying vec2 vUv;
 
       vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
@@ -141,14 +142,15 @@ document.addEventListener('DOMContentLoaded', () => {
         float gEdge = smoothstep(-0.06, 0.02, delta);
         float bEdge = smoothstep(-0.06, 0.02, delta + 0.015);
 
-        float caustic = exp(-abs(delta) * 35.0) * 0.45;
+        float caustic = exp(-abs(delta) * 35.0) * 0.45 * smoothstep(0.02, 0.15, u_progress);
         float alpha = smoothstep(-0.04, 0.02, delta);
 
-        vec3 baseColor = vec3(1.0) + grain;
+        vec3 baseColor = (u_is_dark > 0.5 ? vec3(0.0) : vec3(1.0)) + grain;
         vec3 chromaticColor = vec3(rEdge, gEdge, bEdge);
 
-        vec3 finalColor = mix(vec3(0.96, 0.98, 1.0), baseColor, alpha) + vec3(caustic);
-        finalColor += (vec3(1.0) - chromaticColor) * 0.22 * (1.0 - alpha) * smoothstep(0.0, 0.15, currentRadius);
+        vec3 finalColor = mix(u_is_dark > 0.5 ? vec3(0.0) : vec3(0.96, 0.98, 1.0), baseColor, alpha);
+        finalColor += vec3(caustic);
+        finalColor += (vec3(1.0) - chromaticColor) * (u_is_dark > 0.5 ? 0.0 : 0.22) * (1.0 - alpha) * smoothstep(0.02, 0.18, currentRadius);
 
         float finalAlpha = clamp(alpha + caustic * 0.7, 0.0, 1.0);
         finalAlpha *= smoothstep(1.0, 0.88, u_progress);
@@ -190,15 +192,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const resLoc = gl.getUniformLocation(program, 'u_resolution');
     const progLoc = gl.getUniformLocation(program, 'u_progress');
     const timeLoc = gl.getUniformLocation(program, 'u_time');
+    const darkLoc = gl.getUniformLocation(program, 'u_is_dark');
+    const getIsDark = () => document.documentElement.getAttribute('data-theme') === 'dark' ? 1.0 : 0.0;
 
     gl.enableVertexAttribArray(posAttr);
     gl.vertexAttribPointer(posAttr, 2, gl.FLOAT, false, 0, 0);
 
-    // Pre-render initial frame at t=0 so canvas is already solid white before transition starts
+    // Pre-render initial frame at t=0 so canvas matches current theme background before transition starts
     gl.useProgram(program);
     gl.uniform2f(resLoc, canvas.width, canvas.height);
     gl.uniform1f(progLoc, 0.0);
     gl.uniform1f(timeLoc, 0.0);
+    gl.uniform1f(darkLoc, getIsDark());
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
@@ -218,6 +223,7 @@ document.addEventListener('DOMContentLoaded', () => {
           gl.uniform2f(resLoc, canvas.width, canvas.height);
           gl.uniform1f(progLoc, progress);
           gl.uniform1f(timeLoc, now * 0.001);
+          gl.uniform1f(darkLoc, getIsDark());
 
           gl.clearColor(0, 0, 0, 0);
           gl.clear(gl.COLOR_BUFFER_BIT);
@@ -236,23 +242,24 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   };
 
-  const isPreloaderSkipped = () => {
-    try {
-      return sessionStorage.getItem('skip_preloader') === 'true' || sessionStorage.getItem('preloader_shown') === 'true';
-    } catch (e) {
-      return false;
-    }
-  };
+  // Clean up any legacy preloader skip flags from old sessions
+  try {
+    sessionStorage.removeItem('preloader_shown');
+  } catch (e) {}
 
   // Preloader animation with Fluid Glass Noise Shader Reveal
   const initPreloader = () => {
-    const loader = document.getElementById('loader') || document.getElementById('loading-overlay');
+    const loader = document.getElementById('loader');
     if (!loader) {
       triggerMobileAutoScroll();
       return;
     }
 
-    if (isPreloaderSkipped()) {
+    // Only skip if explicitly returning from a subpage back link
+    if (sessionStorage.getItem('skip_preloader') === 'true') {
+      try {
+        sessionStorage.removeItem('skip_preloader');
+      } catch (e) {}
       loader.classList.add('hide');
       loader.style.display = 'none';
       const pageWrapper = document.querySelector('.page-wrapper');
@@ -265,7 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const shader = initShaderTransition(canvas);
     const pageWrapper = document.querySelector('.page-wrapper');
 
-    // dmu-loader.svg runs animated SVG border stroke trace (3.4s) + smooth fill (0.5s at 3.4s).
+    // Inlined animated SVG logo runs border stroke trace (3.4s) + smooth fill (0.5s at 3.4s).
     // At 3.9s, begin the fluid glass noise shader dissolve (duration 750ms, total runtime ~4.7s)
     setTimeout(() => {
       loader.classList.add('shader-active');
@@ -276,9 +283,6 @@ document.addEventListener('DOMContentLoaded', () => {
           loader.classList.add('hide');
           setTimeout(() => {
             loader.style.display = 'none';
-            try {
-              sessionStorage.setItem('preloader_shown', 'true');
-            } catch (e) {}
             triggerMobileAutoScroll();
           }, 250);
         });
@@ -287,22 +291,11 @@ document.addEventListener('DOMContentLoaded', () => {
         loader.classList.add('hide');
         setTimeout(() => {
           loader.style.display = 'none';
-          try {
-            sessionStorage.setItem('preloader_shown', 'true');
-          } catch (e) {}
           triggerMobileAutoScroll();
         }, 400);
       }
     }, 3900);
   };
-
-  window.addEventListener('pageshow', (event) => {
-    const loader = document.getElementById('loader') || document.getElementById('loading-overlay');
-    if (loader && (event.persisted || isPreloaderSkipped())) {
-      loader.classList.add('hide');
-      loader.style.display = 'none';
-    }
-  });
 
   initTheme();
   initPreloader();
